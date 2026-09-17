@@ -9,16 +9,22 @@ type Dashboard = {
   fullName: string;
   plan: string;
   balance: number;
+  balanceUsd: number;
   weekChangePct: number;
   robotActive: boolean;
   mt5Connected: boolean;
   pair: string;
   dayGain: number;
+  dayGainUsd: number;
   openTrades: number;
 };
 
 function fmt(n: number) {
   return Math.round(n).toLocaleString("fr-FR");
+}
+
+function fmtUsd(n: number) {
+  return n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export default function HomePage() {
@@ -64,7 +70,10 @@ export default function HomePage() {
 
         <div className="bg-surface border border-border rounded-lg2 p-5">
           <div className="text-dim text-[12.5px] mb-1">Solde estimé</div>
-          <div className="text-[34px] font-bold tabular-nums">{d ? fmt(d.balance) : "—"} F</div>
+          <div className="flex items-baseline gap-2">
+            <div className="text-[34px] font-bold tabular-nums">{d ? fmt(d.balance) : "—"} F</div>
+            {d && <div className="text-dimmer text-[12px]">≈ ${fmtUsd(d.balanceUsd)}</div>}
+          </div>
           <div className="text-green text-[13.5px] font-semibold flex items-center gap-1 mt-1.5">
             {d && d.weekChangePct >= 0 ? "↗ +" : "↘ "}
             {d?.weekChangePct ?? 0}% cette semaine
@@ -103,6 +112,11 @@ export default function HomePage() {
             <div className="text-xl font-bold tabular-nums text-green">
               {d ? (d.dayGain >= 0 ? "+" : "") + fmt(d.dayGain) : "—"} F
             </div>
+            {d && (
+              <div className="text-dimmer text-[11px] mt-0.5">
+                {d.dayGainUsd >= 0 ? "+" : ""}${fmtUsd(d.dayGainUsd)}
+              </div>
+            )}
           </div>
           <div className="bg-surface border border-border rounded-md2 p-4">
             <div className="text-dim text-[12.5px] mb-1.5">Trades ouverts</div>

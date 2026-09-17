@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 import AppShell from "@/components/AppShell";
 import { useToast } from "@/components/Toast";
 
-type Trade = { pair: string; time: string; amount: number };
+type Trade = { pair: string; time: string; amount: number; amountUsd: number };
 type Group = { label: string; trades: Trade[] };
 
 export default function HistoriquePage() {
@@ -36,9 +36,14 @@ export default function HistoriquePage() {
                   <div className="font-semibold text-[14.5px]">{t.pair}</div>
                   <div className="text-[12.5px] text-dim mt-0.5">{t.time}</div>
                 </div>
-                <div className={`font-bold tabular-nums ${positive ? "text-green" : "text-red"}`}>
-                  {positive ? "+" : ""}
-                  {Math.round(t.amount).toLocaleString("fr-FR")} F
+                <div className="text-right">
+                  <div className={`font-bold tabular-nums ${positive ? "text-green" : "text-red"}`}>
+                    {positive ? "+" : ""}
+                    {Math.round(t.amount).toLocaleString("fr-FR")} F
+                  </div>
+                  <div className="text-dimmer text-[11px] mt-0.5">
+                    {positive ? "+" : ""}${t.amountUsd.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
                 </div>
               </div>
             );

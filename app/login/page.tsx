@@ -7,8 +7,8 @@ import { Button, FieldLabel } from "@/components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [phone, setPhone] = useState("771715238");
-  const [password, setPassword] = useState("demo1234");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -67,9 +67,6 @@ export default function LoginPage() {
           <Link href="/register" className="text-goldbright font-semibold no-underline">
             Créer un compte
           </Link>
-        </p>
-        <p className="text-center text-dimmer text-xs mt-2">
-          Démo : 771715238 / demo1234
         </p>
       </div>
     </div>
