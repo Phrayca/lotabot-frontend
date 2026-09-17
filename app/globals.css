@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+html, body {
+  background: #080a0d;
+  color: #eef1f4;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.heading-font {
+  font-family: 'Sora', system-ui, sans-serif;
+}
+
+input[type=text], input[type=tel], input[type=email], input[type=password], input[type=number] {
+  width: 100%;
+  background: #212a35;
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #eef1f4;
+  padding: 13px 14px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-family: inherit;
+}
+input:focus {
+  outline: 2px solid #c99a4b;
+  outline-offset: 1px;
+}
