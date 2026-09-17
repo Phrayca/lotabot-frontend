@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Home, History, Bot, GraduationCap, User } from "lucide-react";
 
 const TABS = [
-  { key: "home", label: "Accueil", href: "/home" },
-  { key: "historique", label: "Historique", href: "/historique" },
-  { key: "robot", label: "Robot", href: "/robot" },
-  { key: "formation", label: "Formation", href: "/formation" },
-  { key: "profil", label: "Profil", href: "/profil" },
+  { key: "home", label: "Accueil", href: "/home", Icon: Home },
+  { key: "historique", label: "Historique", href: "/historique", Icon: History },
+  { key: "robot", label: "Robot", href: "/robot", Icon: Bot },
+  { key: "formation", label: "Formation", href: "/formation", Icon: GraduationCap },
+  { key: "profil", label: "Profil", href: "/profil", Icon: User },
 ];
 
 export default function BottomNav() {
@@ -24,7 +25,7 @@ export default function BottomNav() {
               active ? "text-goldbright" : "text-dimmer"
             }`}
           >
-            <span className="text-lg">●</span>
+            <t.Icon size={20} strokeWidth={active ? 2.4 : 1.8} />
             {t.label}
           </Link>
         );
