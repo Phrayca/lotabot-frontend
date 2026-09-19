@@ -1,17 +1,39 @@
 "use client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { api } from "@/lib/api";
 import { BackHeader } from "@/components/ui";
+import { useToast } from "@/components/Toast";
+
+type CourseDetail = {
+  id: string;
+  title: string;
+  durationMin: number;
+  metaLabel: string;
+  premium: boolean;
+  body: string;
+};
 
 function VideoContent() {
   const params = useSearchParams();
-  const title = params.get("title") || "Cours";
-  const duration = parseInt(params.get("duration") || "10", 10);
+  const toast = useToast();
+  const id = params.get("id") || "";
+  const [course, setCourse] = useState<CourseDetail | null>(null);
   const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    api<CourseDetail>(`/courses/${id}`)
+      .then(setCourse)
+      .catch((err) => toast(err.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const duration = course?.durationMin ?? 0;
 
   return (
     <div className="min-h-screen max-w-md mx-auto">
-      <BackHeader title={title} backHref="/formation" />
+      <BackHeader title={course?.title ?? "Cours"} backHref="/formation" />
       <div className="px-5">
         <div className="bg-surface2 rounded-md2 h-[190px] relative flex items-center justify-center mb-3.5">
           <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
@@ -60,10 +82,9 @@ function VideoContent() {
           <button className="rounded-md2 py-[15px] border border-border text-dim font-bold">🎧 Audio seul</button>
           <button className="rounded-md2 py-[15px] bg-[rgba(201,154,75,0.16)] text-goldbright font-bold">▤ Vidéo</button>
         </div>
-        <h3 className="heading-font text-[15px] mt-6 mb-2">Support de cours</h3>
-        <p className="text-dim text-[13.5px] leading-relaxed pb-8">
-          Les points clés de la leçon : taille de position, ratio risque/rendement et discipline de sortie. Le
-          support PDF complet est disponible en téléchargement après la vidéo.
+        <h3 className="heading-font text-[15px] mt-6 mb-2">Ce qu'il faut retenir</h3>
+        <p className="text-dim text-[13.5px] leading-relaxed pb-8 whitespace-pre-line">
+          {course?.body || "Chargement du contenu…"}
         </p>
       </div>
     </div>

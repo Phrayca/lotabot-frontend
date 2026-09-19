@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import AppShell from "@/components/AppShell";
 import { useToast } from "@/components/Toast";
 
-type Course = { title: string; durationMin: number; metaLabel: string; premium: boolean };
+type Course = { id: string; title: string; durationMin: number; metaLabel: string; premium: boolean };
 
 export default function FormationPage() {
   const toast = useToast();
@@ -22,13 +22,13 @@ export default function FormationPage() {
   return (
     <AppShell>
       <h1 className="heading-font text-lg font-bold pt-4 pb-1">Formation</h1>
-      <p className="text-dim text-[13px] -mt-1 mb-4">Réservé aux abonnés Premium</p>
+      <p className="text-dim text-[13px] -mt-1 mb-4">Pour bien démarrer, du plus simple au plus avancé</p>
       <div className="flex flex-col gap-3.5">
         {courses === null && <p className="text-dim text-[13.5px]">Chargement…</p>}
         {courses?.map((c) => (
           <div
-            key={c.title}
-            onClick={() => router.push(`/formation/video?title=${encodeURIComponent(c.title)}&duration=${c.durationMin}`)}
+            key={c.id}
+            onClick={() => router.push(`/formation/video?id=${c.id}`)}
             className="flex items-center gap-3.5 bg-surface border border-border rounded-md2 p-3.5 cursor-pointer"
           >
             <div

@@ -1,16 +1,20 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 import { api, setToken } from "@/lib/api";
-import { Button, Card, FieldLabel } from "@/components/ui";
+import { Button, FieldLabel } from "@/components/ui";
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter();
+  const params = useSearchParams();
   const [plan, setPlan] = useState<"classique" | "premium">("premium");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [referralCode, setReferralCode] = useState(params.get("code") || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -20,11 +24,15 @@ export default function RegisterPage() {
       setError("Renseigne ton nom, ton numéro et un mot de passe (4 caractères min).");
       return;
     }
+    if (password !== confirmPassword) {
+      setError("Les deux mots de passe ne correspondent pas.");
+      return;
+    }
     setLoading(true);
     try {
       const data = await api<{ token: string }>("/auth/register", {
         method: "POST",
-        body: { fullName, phone, password, plan },
+        body: { fullName, phone, password, plan, referralCode: referralCode.trim() || undefined },
       });
       setToken(data.token);
       router.push("/mt5-connect");
@@ -37,8 +45,12 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen max-w-md mx-auto px-6 pt-10 pb-10">
+      <div className="flex items-center gap-2 bg-greenbg text-green text-[13px] font-semibold px-4 py-2.5 rounded-md2 mb-5">
+        <span>🎁</span> 2 jours d'essai gratuit, robot inclus — sans engagement
+      </div>
+
       <h1 className="heading-font text-xl font-bold mb-1">Choisis ta formule</h1>
-      <p className="text-dim text-sm mb-6">Change de formule à tout moment depuis ton profil.</p>
+      <p className="text-dim text-sm mb-6">Tu ne seras débité qu'à la fin de ton essai. Change de formule à tout moment.</p>
 
       <div className="flex flex-col gap-4">
         <PlanCard
@@ -46,7 +58,11 @@ export default function RegisterPage() {
           price="10 000"
           selected={plan === "classique"}
           onClick={() => setPlan("classique")}
-          features={["Robot XAUUSD automatique", "Historique des trades", "Support WhatsApp"]}
+          features={[
+            "Connecte ton compte au robot de trading",
+            "Historique de trades envoyé par e-mail",
+            "Support WhatsApp",
+          ]}
         />
         <PlanCard
           label="Premium"
@@ -56,9 +72,10 @@ export default function RegisterPage() {
           onClick={() => setPlan("premium")}
           features={[
             "Tout Classique inclus",
-            "Formation vidéo complète",
+            "Formation vidéo complète sur le trading de l'or",
             "Niveau de risque personnalisé",
             "Rapport hebdo WhatsApp",
+            "Assistance d'un analyste financier pour installer le robot",
           ]}
         />
       </div>
@@ -76,9 +93,22 @@ export default function RegisterPage() {
           <FieldLabel>Mot de passe</FieldLabel>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
+        <div>
+          <FieldLabel>Confirmer le mot de passe</FieldLabel>
+          <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+        </div>
+        <div>
+          <FieldLabel>Code de parrainage (optionnel)</FieldLabel>
+          <input
+            type="text"
+            value={referralCode}
+            onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+            placeholder="Ex : AMADOU80"
+          />
+        </div>
         {error && <p className="text-red text-[13px]">{error}</p>}
         <Button onClick={submit} disabled={loading}>
-          {loading ? "Création…" : `Continuer avec ${plan === "premium" ? "Premium" : "Classique"}`}
+          {loading ? "Création…" : `Démarrer mon essai gratuit`}
         </Button>
         <p className="text-center text-dim text-[13.5px]">
           Déjà un compte ?{" "}
@@ -125,10 +155,18 @@ function PlanCard({
       <div className="flex flex-col gap-2 mt-2">
         {features.map((f) => (
           <div key={f} className="flex items-center gap-2 text-sm text-dim">
-            <span className="text-green">✓</span> {f}
+            <span className="text-green flex-none mt-0.5">✓</span> {f}
           </div>
         ))}
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterContent />
+    </Suspense>
   );
 }

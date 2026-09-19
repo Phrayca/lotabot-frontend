@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 import { BackHeader, Button } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 
-type Referral = { code: string; referredCount: number; monthsEarned: number };
+type Referral = { code: string; referredCount: number; creditFcfa: number };
 
 export default function ParrainagePage() {
   const toast = useToast();
@@ -34,8 +34,8 @@ export default function ParrainagePage() {
       <div className="px-5">
         <div className="flex flex-col items-center text-center bg-gradient-to-br from-[rgba(201,154,75,0.16)] to-[rgba(201,154,75,0.05)] border border-[rgba(201,154,75,0.3)] rounded-lg2 p-5">
           <div className="text-3xl">🎁</div>
-          <div className="heading-font font-bold text-base mt-2.5">1 mois offert par filleul</div>
-          <div className="text-dim text-[13px] mt-1">Dès son premier paiement validé</div>
+          <div className="heading-font font-bold text-base mt-2.5">1 000 F offerts par filleul</div>
+          <div className="text-dim text-[13px] mt-1">Dès que son abonnement est activé</div>
         </div>
 
         <div className="mt-4.5">
@@ -58,13 +58,20 @@ export default function ParrainagePage() {
         <div className="grid grid-cols-2 gap-3 mt-5">
           <div className="text-center">
             <div className="text-[22px] font-bold">{r?.referredCount ?? "—"}</div>
-            <div className="text-dim text-[13px]">Filleuls</div>
+            <div className="text-dim text-[13px]">Filleuls abonnés</div>
           </div>
           <div className="text-center">
-            <div className="text-[22px] font-bold">{r?.monthsEarned ?? "—"}</div>
-            <div className="text-dim text-[13px]">Mois offerts</div>
+            <div className="text-[22px] font-bold text-goldbright">
+              {r ? Math.round(r.creditFcfa).toLocaleString("fr-FR") : "—"} F
+            </div>
+            <div className="text-dim text-[13px]">Crédit disponible</div>
           </div>
         </div>
+
+        <p className="text-dim text-[13px] leading-relaxed mt-5">
+          Ton crédit se déduit automatiquement de ton prochain paiement, dans l'écran Abonnement. Par
+          exemple, avec 3 000 F de crédit, une formule à 10 000 F ne te coûtera que 7 000 F.
+        </p>
       </div>
     </div>
   );

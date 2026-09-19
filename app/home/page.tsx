@@ -63,9 +63,25 @@ export default function HomePage() {
             <div className="text-dim text-sm">Bonjour</div>
             <div className="heading-font text-lg font-bold">{d?.fullName ?? "…"}</div>
           </div>
-          <span className="text-xs font-bold px-[10px] py-1 rounded-full bg-[rgba(201,154,75,0.15)] text-goldbright">
-            {d?.plan === "premium" ? "Premium" : "Classique"}
-          </span>
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-bold px-[10px] py-1 rounded-full bg-[rgba(201,154,75,0.15)] text-goldbright">
+              {d?.plan === "premium" ? "Premium" : "Classique"}
+            </span>
+            <Link
+              href="/notifications-center"
+              className="w-9 h-9 rounded-full bg-surface border border-border flex items-center justify-center flex-none"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M6 8a6 6 0 1112 0c0 3.5 1 5 2 6H4c1-1 2-2.5 2-6z"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinejoin="round"
+                />
+                <path d="M9.5 18a2.5 2.5 0 005 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </Link>
+          </div>
         </div>
 
         <div className="bg-surface border border-border rounded-lg2 p-5">

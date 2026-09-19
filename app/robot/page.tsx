@@ -7,12 +7,14 @@ import { Button, FieldLabel, Switch } from "@/components/ui";
 
 type Robot = { active: boolean; riskLevel: number; lot: number; maxPositions: number };
 const RISK_LABELS = ["Prudent", "Modéré", "Agressif"];
+const SUGGESTED_LOT = [0.01, 0.02, 0.05];
 
 export default function RobotPage() {
   const toast = useToast();
   const [robot, setRobot] = useState<Robot | null>(null);
   const [lot, setLot] = useState("0.02");
   const [maxPositions, setMaxPositions] = useState("5");
+  const [lotEditedManually, setLotEditedManually] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,6 +40,18 @@ export default function RobotPage() {
 
   function setRisk(level: number) {
     setRobot((prev) => (prev ? { ...prev, riskLevel: level } : prev));
+    // Le robot adapte automatiquement le lot au niveau de risque choisi,
+    // sauf si la personne a déjà modifié ce champ elle-même.
+    if (!lotEditedManually) {
+      setLot(String(SUGGESTED_LOT[level]));
+    }
+  }
+
+  function resetLotToDefault() {
+    if (!robot) return;
+    setLot(String(SUGGESTED_LOT[robot.riskLevel]));
+    setLotEditedManually(false);
+    toast("Lot remis au réglage recommandé");
   }
 
   async function save() {
@@ -90,9 +104,30 @@ export default function RobotPage() {
             </div>
           </div>
 
+          <div className="bg-[rgba(201,154,75,0.1)] border border-[rgba(201,154,75,0.25)] rounded-md2 px-4 py-3 text-[12.5px] text-goldbright leading-relaxed">
+            ⚠️ Le lot est déjà réglé automatiquement selon ton niveau de risque. Nous te recommandons de le
+            laisser tel quel — ne le modifie que si tu veux prendre le risque toi-même, en connaissance de
+            cause.
+          </div>
+
           <div>
-            <FieldLabel>Lot par position</FieldLabel>
-            <input type="number" step="0.01" value={lot} onChange={(e) => setLot(e.target.value)} />
+            <div className="flex items-center justify-between mb-[7px]">
+              <FieldLabel>Lot par position</FieldLabel>
+              {lotEditedManually && (
+                <button onClick={resetLotToDefault} className="text-goldbright text-[12px] font-semibold">
+                  Revenir au réglage recommandé
+                </button>
+              )}
+            </div>
+            <input
+              type="number"
+              step="0.01"
+              value={lot}
+              onChange={(e) => {
+                setLot(e.target.value);
+                setLotEditedManually(true);
+              }}
+            />
           </div>
           <div>
             <FieldLabel>Positions simultanées max</FieldLabel>
