@@ -17,6 +17,7 @@ type Dashboard = {
   dayGain: number;
   dayGainUsd: number;
   openTrades: number;
+  profileComplete: boolean;
 };
 
 function fmt(n: number) {
@@ -83,6 +84,16 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+
+        {d && (!d.profileComplete || !d.mt5Connected) && (
+          <div className="bg-surface border border-[rgba(201,154,75,0.3)] rounded-lg2 p-4.5 mb-3.5">
+            <div className="heading-font font-semibold text-[14.5px] mb-2.5">Guide de démarrage</div>
+            <div className="flex flex-col gap-2">
+              <ChecklistRow done={d.profileComplete} label="Remplir mon profil" href="/profil/infos" />
+              <ChecklistRow done={d.mt5Connected} label="Connecter mon compte MT5" href="/mt5-connect" />
+            </div>
+          </div>
+        )}
 
         <div className="bg-surface border border-border rounded-lg2 p-5">
           <div className="text-dim text-[12.5px] mb-1">Solde estimé</div>
@@ -167,5 +178,27 @@ export default function HomePage() {
         </Link>
       </div>
     </AppShell>
+  );
+}
+
+function ChecklistRow({ done, label, href }: { done: boolean; label: string; href: string }) {
+  const content = (
+    <div className="flex items-center gap-2.5">
+      <span
+        className={`w-5 h-5 rounded-full flex items-center justify-center flex-none text-[11px] ${
+          done ? "bg-green text-white" : "bg-surface3 text-dim"
+        }`}
+      >
+        {done ? "✓" : ""}
+      </span>
+      <span className={`text-[13.5px] ${done ? "text-dim line-through" : ""}`}>{label}</span>
+    </div>
+  );
+  if (done) return content;
+  return (
+    <Link href={href} className="flex items-center justify-between">
+      {content}
+      <span className="text-dim text-[12px]">›</span>
+    </Link>
   );
 }

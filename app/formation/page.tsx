@@ -36,7 +36,7 @@ export default function FormationPage() {
                 c.premium ? "bg-[rgba(201,154,75,0.18)] text-goldbright" : "bg-surface3"
               }`}
             >
-              {c.premium ? "▶" : "▷"}
+              {c.premium ? "📘" : "📄"}
             </div>
             <div>
               <div className="font-semibold text-[14.5px]">{c.title}</div>

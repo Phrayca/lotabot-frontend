@@ -19,17 +19,21 @@ function initials(name: string) {
 }
 
 const MAX_AVATAR_BYTES = 900_000; // marge sous la limite raisonnable pour stocker en base
+const MAX_DOC_BYTES = 2_500_000;
 
 export default function InfosPage() {
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
   const [p, setP] = useState<Profile | null>(null);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [dob, setDob] = useState("");
   const [city, setCity] = useState("");
   const [avatarData, setAvatarData] = useState<string | null | undefined>(undefined);
+  const [idVerified, setIdVerified] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   useEffect(() => {
     api<Profile>("/profile")
@@ -40,6 +44,7 @@ export default function InfosPage() {
         setDob(data.dob);
         setCity(data.city);
         setAvatarData(data.avatarData);
+        setIdVerified(data.idVerified);
       })
       .catch((err) => toast(err.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -82,6 +87,36 @@ export default function InfosPage() {
       toast("Informations enregistrées");
     } catch (err: any) {
       toast(err.message);
+    }
+  }
+
+  function pickDocument() {
+    docInputRef.current?.click();
+  }
+
+  async function onDocumentSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_DOC_BYTES) {
+      toast("Ce fichier est trop lourd, choisis-en un plus léger");
+      return;
+    }
+    setUploadingDoc(true);
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const data = await api<Profile>("/profile", { method: "PUT", body: { idDocumentData: dataUrl } });
+      setIdVerified(data.idVerified);
+      toast("Document reçu, profil vérifié");
+    } catch (err: any) {
+      toast(err.message || "Impossible d'envoyer le document");
+    } finally {
+      setUploadingDoc(false);
+      if (docInputRef.current) docInputRef.current.value = "";
     }
   }
 
@@ -141,9 +176,31 @@ export default function InfosPage() {
         <p className="text-dim text-[13px] -mt-1.5 mb-3">
           Requise pour activer les retraits et sécuriser ton compte.
         </p>
-        <div className="flex items-center justify-between bg-surface border border-border rounded-md2 px-4 py-[15px]">
-          <span>Pièce d'identité (CNI/Passeport)</span>
-          <Chip tone={p?.idVerified ? "green" : "gold"}>{p?.idVerified ? "Vérifié" : "En attente"}</Chip>
+        <input
+          ref={docInputRef}
+          type="file"
+          accept="image/*,.pdf"
+          className="hidden"
+          onChange={onDocumentSelected}
+        />
+        <div
+          onClick={idVerified ? undefined : pickDocument}
+          className={`flex items-center justify-between bg-surface border border-border rounded-md2 px-4 py-[15px] ${
+            idVerified ? "" : "cursor-pointer"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">{idVerified ? "✅" : "📄"}</span>
+            <div>
+              <div className="text-[14.5px]">Pièce d'identité (CNI/Passeport)</div>
+              {!idVerified && (
+                <div className="text-[12px] text-dim mt-0.5">
+                  {uploadingDoc ? "Envoi en cours…" : "Appuie pour envoyer une photo ou un scan"}
+                </div>
+              )}
+            </div>
+          </div>
+          <Chip tone={idVerified ? "green" : "gold"}>{idVerified ? "Vérifié" : "En attente"}</Chip>
         </div>
         <Button onClick={save} className="mt-5">
           Enregistrer
