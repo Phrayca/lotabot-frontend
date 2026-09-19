@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import { BackHeader, Button, Chip, FieldLabel } from "@/components/ui";
 import { useToast } from "@/components/Toast";
@@ -18,8 +19,54 @@ function initials(name: string) {
   return name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
 }
 
-const MAX_AVATAR_BYTES = 900_000; // marge sous la limite raisonnable pour stocker en base
-const MAX_DOC_BYTES = 2_500_000;
+const MAX_SOURCE_BYTES = 15_000_000; // fichier d'origine, avant compression
+const MAX_DOC_PDF_BYTES = 4_000_000; // les PDF ne sont pas compressés
+
+// Redimensionne et compresse une image côté navigateur avant envoi, pour que
+// même une photo de téléphone de plusieurs Mo passe sans problème.
+function compressImage(file: File, maxDim: number, quality: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Impossible de traiter cette image"));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => reject(new Error("Image illisible"));
+      img.src = reader.result as string;
+    };
+    reader.onerror = () => reject(new Error("Fichier illisible"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function InfosPage() {
   const toast = useToast();
@@ -57,18 +104,13 @@ export default function InfosPage() {
   async function onPhotoSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > MAX_AVATAR_BYTES) {
+    if (file.size > MAX_SOURCE_BYTES) {
       toast("Cette photo est trop lourde, choisis-en une plus légère");
       return;
     }
     setUploading(true);
     try {
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      const dataUrl = await compressImage(file, 500, 0.82);
       const data = await api<Profile>("/profile", { method: "PUT", body: { avatarData: dataUrl } });
       setAvatarData(data.avatarData);
       toast("Photo mise à jour");
@@ -97,18 +139,23 @@ export default function InfosPage() {
   async function onDocumentSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > MAX_DOC_BYTES) {
+    if (file.size > MAX_SOURCE_BYTES) {
       toast("Ce fichier est trop lourd, choisis-en un plus léger");
       return;
     }
     setUploadingDoc(true);
     try {
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      let dataUrl: string;
+      if (file.type.startsWith("image/")) {
+        dataUrl = await compressImage(file, 1400, 0.85);
+      } else {
+        if (file.size > MAX_DOC_PDF_BYTES) {
+          toast("Ce PDF est trop lourd, choisis-en un plus léger (4 Mo max)");
+          setUploadingDoc(false);
+          return;
+        }
+        dataUrl = await readAsDataUrl(file);
+      }
       const data = await api<Profile>("/profile", { method: "PUT", body: { idDocumentData: dataUrl } });
       setIdVerified(data.idVerified);
       toast("Document reçu, profil vérifié");
@@ -172,6 +219,11 @@ export default function InfosPage() {
             <input type="text" value={city} onChange={(e) => setCity(e.target.value)} />
           </div>
         </div>
+
+        <Link href="/profil/mot-de-passe" className="block text-goldbright text-[13.5px] font-semibold mt-4">
+          Changer mon mot de passe
+        </Link>
+
         <h3 className="heading-font text-[15px] mt-5.5 mb-2.5">Vérification d'identité</h3>
         <p className="text-dim text-[13px] -mt-1.5 mb-3">
           Requise pour activer les retraits et sécuriser ton compte.
@@ -184,7 +236,7 @@ export default function InfosPage() {
           onChange={onDocumentSelected}
         />
         <div
-          onClick={idVerified ? undefined : pickDocument}
+          onClick={idVerified || uploadingDoc ? undefined : pickDocument}
           className={`flex items-center justify-between bg-surface border border-border rounded-md2 px-4 py-[15px] ${
             idVerified ? "" : "cursor-pointer"
           }`}

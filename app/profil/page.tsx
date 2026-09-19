@@ -25,6 +25,7 @@ function initials(name: string) {
 const STATUS_LABEL: Record<string, string> = {
   active: "actif",
   trialing: "essai gratuit",
+  expired: "essai terminé",
   cancelled: "annulé",
 };
 

@@ -18,6 +18,7 @@ type Dashboard = {
   dayGainUsd: number;
   openTrades: number;
   profileComplete: boolean;
+  subscriptionStatus: string;
 };
 
 function fmt(n: number) {
@@ -84,6 +85,20 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+
+        {d && d.subscriptionStatus === "expired" && (
+          <Link
+            href="/profil/abonnement"
+            className="flex items-center gap-2.5 bg-redbg border border-[rgba(192,86,59,0.35)] rounded-md2 px-4 py-3 mb-3.5"
+          >
+            <span className="text-lg flex-none">⏳</span>
+            <div className="flex-1">
+              <div className="text-[13.5px] font-semibold text-red">Essai terminé, robot en pause</div>
+              <div className="text-[12px] text-dim">Active ton abonnement pour reprendre</div>
+            </div>
+            <span className="text-red text-[12px]">›</span>
+          </Link>
+        )}
 
         {d && (!d.profileComplete || !d.mt5Connected) && (
           <StartupPill profileComplete={d.profileComplete} mt5Connected={d.mt5Connected} />
