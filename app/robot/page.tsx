@@ -1,21 +1,25 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import AppShell from "@/components/AppShell";
 import { useToast } from "@/components/Toast";
 import { Button, FieldLabel, Switch } from "@/components/ui";
 
-type Robot = { active: boolean; riskLevel: number; lot: number; maxPositions: number };
+type Robot = { active: boolean; riskLevel: number; lot: number; maxPositions: number; plan: string };
 const RISK_LABELS = ["Prudent", "Modéré", "Agressif"];
 const SUGGESTED_LOT = [0.01, 0.02, 0.05];
 
 export default function RobotPage() {
   const toast = useToast();
+  const router = useRouter();
   const [robot, setRobot] = useState<Robot | null>(null);
   const [lot, setLot] = useState("0.02");
   const [maxPositions, setMaxPositions] = useState("5");
   const [lotEditedManually, setLotEditedManually] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
+
+  const isPremium = robot?.plan === "premium";
 
   useEffect(() => {
     api<Robot>("/robot")
@@ -39,9 +43,11 @@ export default function RobotPage() {
   }
 
   function setRisk(level: number) {
+    if (!isPremium) {
+      toast("Niveau de risque personnalisé réservé à Premium");
+      return;
+    }
     setRobot((prev) => (prev ? { ...prev, riskLevel: level } : prev));
-    // Le robot adapte automatiquement le lot au niveau de risque choisi,
-    // sauf si la personne a déjà modifié ce champ elle-même.
     if (!lotEditedManually) {
       setLot(String(SUGGESTED_LOT[level]));
     }
@@ -84,8 +90,18 @@ export default function RobotPage() {
           </div>
 
           <div>
-            <FieldLabel>Niveau de risque</FieldLabel>
-            <div ref={trackRef} className="w-full h-1 bg-surface3 rounded-full relative my-[22px]">
+            <div className="flex items-center justify-between mb-[7px]">
+              <FieldLabel>Niveau de risque</FieldLabel>
+              {!isPremium && (
+                <button onClick={() => router.push("/profil/abonnement")} className="text-goldbright text-[12px] font-semibold">
+                  🔒 Passer Premium
+                </button>
+              )}
+            </div>
+            <div
+              ref={trackRef}
+              className={`w-full h-1 bg-surface3 rounded-full relative my-[22px] ${!isPremium ? "opacity-50" : ""}`}
+            >
               <div
                 className="absolute top-0 left-0 h-full bg-gold rounded-full"
                 style={{ width: `${(robot.riskLevel / 2) * 100}%` }}
@@ -95,13 +111,18 @@ export default function RobotPage() {
                 style={{ left: `${(robot.riskLevel / 2) * 100}%` }}
               />
             </div>
-            <div className="flex justify-between text-xs text-dim">
+            <div className={`flex justify-between text-xs text-dim ${!isPremium ? "opacity-50" : ""}`}>
               {RISK_LABELS.map((l, i) => (
-                <span key={l} onClick={() => setRisk(i)} className="cursor-pointer">
+                <span key={l} onClick={() => setRisk(i)} className={isPremium ? "cursor-pointer" : "cursor-not-allowed"}>
                   {l}
                 </span>
               ))}
             </div>
+            {!isPremium && (
+              <p className="text-dimmer text-[12px] mt-2">
+                Ton robot utilise le niveau Modéré par défaut. Passe à Premium pour l'ajuster toi-même.
+              </p>
+            )}
           </div>
 
           <div className="bg-[rgba(201,154,75,0.1)] border border-[rgba(201,154,75,0.25)] rounded-md2 px-4 py-3 text-[12.5px] text-goldbright leading-relaxed">

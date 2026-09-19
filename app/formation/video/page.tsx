@@ -1,6 +1,6 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { BackHeader } from "@/components/ui";
 import { useToast } from "@/components/Toast";
@@ -17,6 +17,7 @@ type CourseDetail = {
 function LessonContent() {
   const params = useSearchParams();
   const toast = useToast();
+  const router = useRouter();
   const id = params.get("id") || "";
   const [course, setCourse] = useState<CourseDetail | null>(null);
 
@@ -24,7 +25,10 @@ function LessonContent() {
     if (!id) return;
     api<CourseDetail>(`/courses/${id}`)
       .then(setCourse)
-      .catch((err) => toast(err.message));
+      .catch((err) => {
+        toast(err.message);
+        router.push("/formation");
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 

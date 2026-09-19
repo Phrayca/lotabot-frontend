@@ -32,6 +32,8 @@ export default function ProfilPage() {
   const router = useRouter();
   const toast = useToast();
   const [p, setP] = useState<Profile | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     api<Profile>("/profile")
@@ -43,6 +45,18 @@ export default function ProfilPage() {
   function logout() {
     setToken(null);
     router.push("/login");
+  }
+
+  async function deleteAccount() {
+    setDeleting(true);
+    try {
+      await api("/profile", { method: "DELETE" });
+      setToken(null);
+      router.push("/login");
+    } catch (err: any) {
+      toast(err.message);
+      setDeleting(false);
+    }
   }
 
   return (
@@ -92,7 +106,32 @@ export default function ProfilPage() {
         <Button variant="dangerText" onClick={logout} className="mt-6 text-left justify-start">
           ↩ Se déconnecter
         </Button>
+        <Button
+          variant="dangerText"
+          onClick={() => setShowDeleteConfirm(true)}
+          className="mt-1 text-left justify-start opacity-70"
+        >
+          🗑 Supprimer mon compte
+        </Button>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/55 flex items-end justify-center z-50">
+          <div className="max-w-md w-full bg-surface rounded-t-[22px] border-t border-border px-5 pt-6 pb-7">
+            <h3 className="heading-font text-lg font-bold mb-2">Supprimer ton compte ?</h3>
+            <p className="text-dim text-sm mb-5">
+              Cette action est définitive : ton profil, ton historique de trades, ton abonnement et ton
+              code de parrainage seront supprimés pour toujours. Impossible de revenir en arrière.
+            </p>
+            <Button variant="danger" onClick={deleteAccount} disabled={deleting}>
+              {deleting ? "Suppression…" : "Oui, supprimer définitivement"}
+            </Button>
+            <Button variant="ghost" className="mt-2.5" onClick={() => setShowDeleteConfirm(false)}>
+              Annuler
+            </Button>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

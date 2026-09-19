@@ -86,13 +86,7 @@ export default function HomePage() {
         </div>
 
         {d && (!d.profileComplete || !d.mt5Connected) && (
-          <div className="bg-surface border border-[rgba(201,154,75,0.3)] rounded-lg2 p-4.5 mb-3.5">
-            <div className="heading-font font-semibold text-[14.5px] mb-2.5">Guide de démarrage</div>
-            <div className="flex flex-col gap-2">
-              <ChecklistRow done={d.profileComplete} label="Remplir mon profil" href="/profil/infos" />
-              <ChecklistRow done={d.mt5Connected} label="Connecter mon compte MT5" href="/mt5-connect" />
-            </div>
-          </div>
+          <StartupPill profileComplete={d.profileComplete} mt5Connected={d.mt5Connected} />
         )}
 
         <div className="bg-surface border border-border rounded-lg2 p-5">
@@ -181,24 +175,20 @@ export default function HomePage() {
   );
 }
 
-function ChecklistRow({ done, label, href }: { done: boolean; label: string; href: string }) {
-  const content = (
-    <div className="flex items-center gap-2.5">
-      <span
-        className={`w-5 h-5 rounded-full flex items-center justify-center flex-none text-[11px] ${
-          done ? "bg-green text-white" : "bg-surface3 text-dim"
-        }`}
-      >
-        {done ? "✓" : ""}
-      </span>
-      <span className={`text-[13.5px] ${done ? "text-dim line-through" : ""}`}>{label}</span>
-    </div>
-  );
-  if (done) return content;
+function StartupPill({ profileComplete, mt5Connected }: { profileComplete: boolean; mt5Connected: boolean }) {
+  const done = (profileComplete ? 1 : 0) + (mt5Connected ? 1 : 0);
+  const nextHref = !profileComplete ? "/profil/infos" : "/mt5-connect";
+  const nextLabel = !profileComplete ? "Compléter ton profil" : "Connecter ton compte MT5";
+
   return (
-    <Link href={href} className="flex items-center justify-between">
-      {content}
-      <span className="text-dim text-[12px]">›</span>
+    <Link
+      href={nextHref}
+      className="flex items-center gap-2.5 bg-[rgba(201,154,75,0.1)] border border-[rgba(201,154,75,0.25)] rounded-full pl-3.5 pr-2.5 py-2 mb-3.5"
+    >
+      <span className="text-goldbright text-[13px] flex-none">🚀</span>
+      <span className="text-[12.5px] text-goldbright font-medium flex-1 truncate">{nextLabel}</span>
+      <span className="text-dimmer text-[11px] flex-none">{done}/2</span>
+      <span className="text-goldbright text-[12px] flex-none">›</span>
     </Link>
   );
 }
