@@ -10,10 +10,10 @@ export default function MT5ConnectPage() {
   const toast = useToast();
   const [brokerServer, setBrokerServer] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
-  const [investorPassword, setInvestorPassword] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showGuide, setShowGuide] = useState(true);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn()) router.replace("/login");
@@ -21,7 +21,7 @@ export default function MT5ConnectPage() {
 
   async function connect() {
     setError("");
-    if (!brokerServer.trim() || !accountNumber.trim() || !investorPassword) {
+    if (!brokerServer.trim() || !accountNumber.trim() || !password) {
       setError("Tous les champs sont requis.");
       return;
     }
@@ -29,9 +29,9 @@ export default function MT5ConnectPage() {
     try {
       const data = await api<{ demoMode: boolean }>("/mt5/connect", {
         method: "POST",
-        body: { brokerServer, accountNumber, investorPassword },
+        body: { brokerServer, accountNumber, password },
       });
-      toast(data.demoMode ? "Compte connecté (mode démo)" : "Compte MT5 connecté");
+      toast(data.demoMode ? "Compte connecté, mise en route en cours" : "Compte MT5 connecté");
       router.push("/home");
     } catch (err: any) {
       setError(err.message);
@@ -47,11 +47,13 @@ export default function MT5ConnectPage() {
         <span>💡</span>
         <span>
           N'oublie pas non plus de compléter ton profil (Profil → Informations personnelles) : c'est
-          nécessaire pour activer les retraits et le rapport hebdo.
+          nécessaire pour recevoir ton rapport hebdo.
         </span>
       </div>
       <p className="text-dim text-sm mb-4">
-        Utilise ton mot de passe investisseur (lecture seule) — jamais ton mot de passe principal.
+        Renseigne le mot de passe de ton compte MT5 (celui avec lequel tu passes tes ordres). C'est
+        nécessaire pour que le robot puisse trader à ta place — il est chiffré dès son enregistrement,
+        et personne ne peut retirer de l'argent de ton compte avec, seulement trader.
       </p>
 
       <button
@@ -69,13 +71,10 @@ export default function MT5ConnectPage() {
             n={3}
             text="Sous 'Serveur', tu trouveras le nom exact à coller ci-dessous (ex : JustMarkets-MT5Real)."
           />
-          <GuideStep
-            n={4}
-            text="Le numéro de compte est affiché juste au-dessus du serveur."
-          />
+          <GuideStep n={4} text="Le numéro de compte est affiché juste au-dessus du serveur." />
           <GuideStep
             n={5}
-            text="Pour le mot de passe investisseur : dans MT5, touche ton compte → Changer le mot de passe → choisis 'Investisseur (lecture seule)'. Si tu ne l'as jamais défini, tu peux en créer un ici sans risque pour ton compte."
+            text="C'est le mot de passe que tu utilises pour te connecter et trader dans MT5 (pas celui, différent, dit 'investisseur' qui ne permet que de consulter)."
           />
         </div>
       )}
@@ -95,12 +94,8 @@ export default function MT5ConnectPage() {
           <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
         </div>
         <div>
-          <FieldLabel>Mot de passe investisseur</FieldLabel>
-          <input
-            type="password"
-            value={investorPassword}
-            onChange={(e) => setInvestorPassword(e.target.value)}
-          />
+          <FieldLabel>Mot de passe MT5</FieldLabel>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         {error && <p className="text-red text-[13px]">{error}</p>}
         <Button onClick={connect} disabled={loading}>

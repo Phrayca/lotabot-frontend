@@ -10,12 +10,22 @@ type MT5Status = {
   brokerServer?: string;
   accountNumber?: string;
   syncToken?: string;
+  bridgeStatus?: string;
+  bridgeError?: string;
+};
+
+const BRIDGE_LABEL: Record<string, { text: string; tone: "green" | "gold" | "dim" }> = {
+  running: { text: "Robot actif sur ce compte", tone: "green" },
+  pending: { text: "Mise en route en cours…", tone: "gold" },
+  error: { text: "Problème de connexion", tone: "dim" },
+  disconnected: { text: "Non connecté", tone: "dim" },
 };
 
 export default function MT5StatusPage() {
   const toast = useToast();
   const router = useRouter();
   const [m, setM] = useState<MT5Status | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   function load() {
     api<MT5Status>("/mt5")
@@ -41,6 +51,8 @@ export default function MT5StatusPage() {
     toast("Code copié");
   }
 
+  const bridge = m?.connected ? BRIDGE_LABEL[m.bridgeStatus || "pending"] : BRIDGE_LABEL.disconnected;
+
   return (
     <div className="min-h-screen max-w-md mx-auto pb-10">
       <BackHeader title="Compte MT5" backHref="/profil" />
@@ -55,29 +67,12 @@ export default function MT5StatusPage() {
               </div>
             </div>
           </div>
-          <Chip tone={m?.connected ? "green" : "dim"}>{m?.connected ? "Connecté" : "Déconnecté"}</Chip>
+          <Chip tone={bridge.tone}>{bridge.text}</Chip>
         </div>
 
-        <div>
-          <label className="block text-[12.5px] text-dim mb-[7px]">
-            Ton code de synchronisation personnel
-          </label>
-          <div
-            onClick={copyToken}
-            className="flex items-center justify-between bg-surface2 border border-border rounded-md2 px-4 py-[15px] cursor-pointer"
-          >
-            <span className="font-mono text-[13px] break-all pr-3">{m?.syncToken ?? "…"}</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="flex-none text-dim">
-              <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.6" />
-              <rect x="4" y="4" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.6" />
-            </svg>
-          </div>
-          <p className="text-dimmer text-[12px] mt-2 leading-relaxed">
-            Colle ce code dans le paramètre "Code Lotabot" de ton robot (EA) — il permet au robot de
-            transmettre tes trades uniquement sur ton propre compte, jamais sur celui d'un autre client.
-            Ne le partage à personne.
-          </p>
-        </div>
+        {m?.bridgeStatus === "error" && m.bridgeError && (
+          <p className="text-red text-[12.5px] leading-relaxed">{m.bridgeError}</p>
+        )}
 
         <Button variant="ghost" onClick={() => router.push("/mt5-connect")}>
           Reconnecter un compte
@@ -86,6 +81,34 @@ export default function MT5StatusPage() {
           <Button variant="dangerText" onClick={disconnect}>
             Déconnecter ce compte
           </Button>
+        )}
+
+        <button
+          onClick={() => setShowAdvanced((v) => !v)}
+          className="text-dimmer text-[12.5px] mt-2 text-left"
+        >
+          {showAdvanced ? "Masquer les options avancées" : "Options avancées"}
+        </button>
+        {showAdvanced && (
+          <div>
+            <label className="block text-[12.5px] text-dim mb-[7px]">
+              Code de synchronisation personnel
+            </label>
+            <div
+              onClick={copyToken}
+              className="flex items-center justify-between bg-surface2 border border-border rounded-md2 px-4 py-[15px] cursor-pointer"
+            >
+              <span className="font-mono text-[13px] break-all pr-3">{m?.syncToken ?? "…"}</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="flex-none text-dim">
+                <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.6" />
+                <rect x="4" y="4" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.6" />
+              </svg>
+            </div>
+            <p className="text-dimmer text-[12px] mt-2 leading-relaxed">
+              Réservé à un usage avancé (robot auto-hébergé sur ton propre terminal MT5). Dans le
+              fonctionnement normal de Lotabot, tu n'as pas besoin de ce code.
+            </p>
+          </div>
         )}
       </div>
     </div>
