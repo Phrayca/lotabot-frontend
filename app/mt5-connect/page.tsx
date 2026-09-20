@@ -5,6 +5,9 @@ import { api, isLoggedIn } from "@/lib/api";
 import { Button, FieldLabel } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 
+// Serveurs connus, proposés pendant la saisie (le client peut aussi taper le sien).
+const KNOWN_SERVERS = ["JustMarkets-Demo"];
+
 export default function MT5ConnectPage() {
   const router = useRouter();
   const toast = useToast();
@@ -21,18 +24,26 @@ export default function MT5ConnectPage() {
 
   async function connect() {
     setError("");
-    if (!brokerServer.trim() || !accountNumber.trim() || !password) {
+    const server = brokerServer.trim();
+    const account = accountNumber.trim();
+    if (!server || !account || !password) {
       setError("Tous les champs sont requis.");
+      return;
+    }
+    if (!/^\d+$/.test(account)) {
+      setError("Le numéro de compte ne contient que des chiffres.");
       return;
     }
     setLoading(true);
     try {
       const data = await api<{ demoMode: boolean }>("/mt5/connect", {
         method: "POST",
-        body: { brokerServer, accountNumber, password },
+        body: { brokerServer: server, accountNumber: account, password },
       });
       toast(data.demoMode ? "Compte connecté, mise en route en cours" : "Compte MT5 connecté");
-      router.push("/home");
+      // On affiche l'état du compte : il passe de « Mise en route » à « Robot actif »
+      // (ou affiche un message clair si un champ est faux).
+      router.push("/profil/mt5");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -69,7 +80,7 @@ export default function MT5ConnectPage() {
           <GuideStep n={2} text="Va dans Réglages (ou le menu ≡) puis touche ton compte de trading." />
           <GuideStep
             n={3}
-            text="Sous 'Serveur', tu trouveras le nom exact à coller ci-dessous (ex : JustMarkets-MT5Real)."
+            text="Sous 'Serveur', tu trouveras le nom exact à recopier ci-dessous, lettre pour lettre (ex : JustMarkets-Demo). Ne rajoute rien : pas d'espace, pas de « MT5 »."
           />
           <GuideStep n={4} text="Le numéro de compte est affiché juste au-dessus du serveur." />
           <GuideStep
@@ -84,18 +95,45 @@ export default function MT5ConnectPage() {
           <FieldLabel>Serveur du courtier</FieldLabel>
           <input
             type="text"
+            list="mt5-servers"
             value={brokerServer}
             onChange={(e) => setBrokerServer(e.target.value)}
-            placeholder="ex : JustMarkets-MT5Real"
+            placeholder="ex : JustMarkets-Demo"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
           />
+          <datalist id="mt5-servers">
+            {KNOWN_SERVERS.map((s) => (
+              <option key={s} value={s} />
+            ))}
+          </datalist>
+          <p className="text-dimmer text-[12px] mt-1.5 leading-relaxed">
+            Recopie le nom exactement comme dans MT5. Une seule lettre différente et la connexion échoue.
+          </p>
         </div>
         <div>
           <FieldLabel>Numéro de compte</FieldLabel>
-          <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
+          <input
+            type="text"
+            inputMode="numeric"
+            value={accountNumber}
+            onChange={(e) => setAccountNumber(e.target.value)}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+          />
         </div>
         <div>
           <FieldLabel>Mot de passe MT5</FieldLabel>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+          />
         </div>
         {error && <p className="text-red text-[13px]">{error}</p>}
         <Button onClick={connect} disabled={loading}>

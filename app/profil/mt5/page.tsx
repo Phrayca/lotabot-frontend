@@ -27,12 +27,21 @@ export default function MT5StatusPage() {
   const [m, setM] = useState<MT5Status | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  function load() {
+  // silent = true : rafraîchissement automatique, sans message d'erreur en cas de coupure réseau
+  function load(silent = false) {
     api<MT5Status>("/mt5")
       .then(setM)
-      .catch((err) => toast(err.message));
+      .catch((err) => {
+        if (!silent) toast(err.message);
+      });
   }
-  useEffect(load, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    load();
+    // L'état change tout seul (mise en route, erreur corrigée) : on le rafraîchit toutes les 10 s
+    const timer = setInterval(() => load(true), 10000);
+    return () => clearInterval(timer);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function disconnect() {
     try {
@@ -52,6 +61,8 @@ export default function MT5StatusPage() {
   }
 
   const bridge = m?.connected ? BRIDGE_LABEL[m.bridgeStatus || "pending"] : BRIDGE_LABEL.disconnected;
+  const hasError = m?.connected && m.bridgeStatus === "error";
+  const isPending = m?.connected && (m.bridgeStatus === "pending" || !m.bridgeStatus);
 
   return (
     <div className="min-h-screen max-w-md mx-auto pb-10">
@@ -70,12 +81,19 @@ export default function MT5StatusPage() {
           <Chip tone={bridge.tone}>{bridge.text}</Chip>
         </div>
 
-        {m?.bridgeStatus === "error" && m.bridgeError && (
+        {isPending && (
+          <p className="text-dim text-[12.5px] leading-relaxed">
+            Ton compte est en cours de connexion. Cela peut prendre quelques minutes : cette page se met à
+            jour toute seule.
+          </p>
+        )}
+
+        {hasError && m?.bridgeError && (
           <p className="text-red text-[12.5px] leading-relaxed">{m.bridgeError}</p>
         )}
 
         <Button variant="ghost" onClick={() => router.push("/mt5-connect")}>
-          Reconnecter un compte
+          {hasError ? "Corriger mes identifiants" : "Reconnecter un compte"}
         </Button>
         {m?.connected && (
           <Button variant="dangerText" onClick={disconnect}>
