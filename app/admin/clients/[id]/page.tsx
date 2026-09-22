@@ -7,6 +7,7 @@ import AdminShell from "@/components/AdminShell";
 
 type LegalAcceptance = { slug: string; version: string; acceptedAt: string; ipAddress?: string };
 type Trade = { externalId?: string; pair: string; amountUsd: number; status: string; openedAt: string };
+type Note = { id: string; body: string; createdAt: string; adminEmail: string };
 
 type ClientDetail = {
   id: string;
@@ -50,25 +51,132 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
+function ActionButton({
+  onClick,
+  disabled,
+  tone = "default",
+  children,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  tone?: "default" | "danger" | "primary";
+  children: React.ReactNode;
+}) {
+  const tones: Record<string, string> = {
+    default: "bg-white border border-[#CFC7B6] text-[#1B1F27]",
+    danger: "bg-white border border-[#E3B8AE] text-[#9C2F1B]",
+    primary: "bg-[#C99A4B] border-0 text-[#1B1305]",
+  };
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`min-h-[40px] px-4 rounded-[10px] text-[13.5px] font-semibold disabled:opacity-50 ${tones[tone]}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function AdminClientDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const [c, setC] = useState<ClientDetail | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [extendDays, setExtendDays] = useState("30");
   const [error, setError] = useState("");
+  const [actionMsg, setActionMsg] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  function load() {
+    return Promise.all([
+      adminApi<ClientDetail>(`/admin/clients/${params.id}`),
+      adminApi<{ notes: Note[] }>(`/admin/clients/${params.id}/notes`),
+    ]).then(([detail, notesRes]) => {
+      setC(detail);
+      setNotes(notesRes.notes);
+    });
+  }
 
   useEffect(() => {
     if (!isAdminLoggedIn()) {
       router.replace("/admin/login");
       return;
     }
-    adminApi<ClientDetail>(`/admin/clients/${params.id}`)
-      .then(setC)
-      .catch((err: any) => {
-        setError(err.message);
-        if (err.message?.includes("Session")) router.replace("/admin/login");
-      });
+    load().catch((err: any) => {
+      setError(err.message);
+      if (err.message?.includes("Session")) router.replace("/admin/login");
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
+
+  async function toggleRobot() {
+    if (!c) return;
+    setBusy("robot");
+    setActionMsg("");
+    try {
+      await adminApi(`/admin/clients/${c.id}/robot`, { method: "PUT", body: { active: c.robotStatus !== "active" } });
+      await load();
+      setActionMsg("Réglage du robot mis à jour.");
+    } catch (err: any) {
+      setActionMsg(err.message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function restartMt5() {
+    if (!c) return;
+    setBusy("restart");
+    setActionMsg("");
+    try {
+      await adminApi(`/admin/clients/${c.id}/mt5/restart`, { method: "POST" });
+      await load();
+      setActionMsg("Redémarrage demandé : compte quelques minutes le temps que le serveur reprenne la main.");
+    } catch (err: any) {
+      setActionMsg(err.message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function extendSubscription() {
+    if (!c) return;
+    const days = parseInt(extendDays, 10);
+    if (!days || days <= 0) {
+      setActionMsg("Indique un nombre de jours valide.");
+      return;
+    }
+    setBusy("extend");
+    setActionMsg("");
+    try {
+      await adminApi(`/admin/clients/${c.id}/subscription/extend`, { method: "POST", body: { days } });
+      await load();
+      setActionMsg(`${days} jour(s) offert(s).`);
+    } catch (err: any) {
+      setActionMsg(err.message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function saveNote() {
+    if (!c || !noteDraft.trim()) return;
+    setBusy("note");
+    try {
+      const res = await adminApi<{ notes: Note[] }>(`/admin/clients/${c.id}/notes`, {
+        method: "POST",
+        body: { body: noteDraft.trim() },
+      });
+      setNotes(res.notes);
+      setNoteDraft("");
+    } catch (err: any) {
+      setActionMsg(err.message);
+    } finally {
+      setBusy(null);
+    }
+  }
 
   if (error) {
     return (
@@ -98,7 +206,7 @@ export default function AdminClientDetailPage() {
         / {c.fullName}
       </div>
 
-      <div className="flex items-center gap-4 mb-6 flex-wrap">
+      <div className="flex items-center gap-4 mb-4 flex-wrap">
         <div className="w-14 h-14 rounded-full bg-[#ECE8DF] text-[#4A5160] font-bold text-lg flex items-center justify-center">
           {c.fullName
             .split(" ")
@@ -121,7 +229,20 @@ export default function AdminClientDetailPage() {
             Arrêt de sécurité
           </span>
         )}
+        <span className="flex-1" />
+        {c.mt5Connected && (
+          <>
+            <ActionButton onClick={toggleRobot} disabled={busy === "robot"}>
+              {c.robotStatus === "active" ? "Mettre en pause" : "Réactiver le robot"}
+            </ActionButton>
+            <ActionButton onClick={restartMt5} disabled={busy === "restart"} tone={c.robotStatus === "safety_stop" ? "primary" : "default"}>
+              {c.robotStatus === "safety_stop" ? "Remettre à zéro (redémarrer)" : "Redémarrer la connexion"}
+            </ActionButton>
+          </>
+        )}
       </div>
+
+      {actionMsg && <p className="text-[#5B6270] text-[13px] mb-4">{actionMsg}</p>}
 
       {c.robotStatus === "safety_stop" && (
         <div className="bg-[#FBE7E2] border border-[#E3B8AE] rounded-2xl px-5 py-4 mb-6">
@@ -130,7 +251,8 @@ export default function AdminClientDetailPage() {
             {c.robotStatusMessage || "Une baisse trop importante a mis le robot en pause sur ce compte."}
           </div>
           <div className="text-[#6E2314] mt-2 text-[12.5px]">
-            La remise en route se fait pour l'instant directement sur le serveur du bridge (bientôt un bouton ici).
+            « Remettre à zéro » redémarre le worker sur un état propre. Vérifie la situation du compte avant de le
+            faire.
           </div>
         </div>
       )}
@@ -211,6 +333,19 @@ export default function AdminClientDetailPage() {
               <dt className="text-[#5B6270]">Ville</dt>
               <dd className="font-semibold m-0">{c.city || "—"}</dd>
             </dl>
+            <div className="flex items-center gap-2 mt-4">
+              <input
+                type="number"
+                min={1}
+                value={extendDays}
+                onChange={(e) => setExtendDays(e.target.value)}
+                className="w-20 min-h-[40px] px-3 rounded-[10px] border border-[#CFC7B6] text-[14px]"
+              />
+              <span className="text-[13px] text-[#5B6270]">jours à offrir</span>
+              <ActionButton onClick={extendSubscription} disabled={busy === "extend"} tone="primary">
+                Offrir
+              </ActionButton>
+            </div>
           </div>
 
           <div className="bg-white border border-[#E4DED2] rounded-2xl p-5">
@@ -226,6 +361,31 @@ export default function AdminClientDetailPage() {
                 <div className="text-[#5B6270] text-[12.5px] mt-0.5">
                   {fmtDate(a.acceptedAt)}
                   {a.ipAddress ? ` · IP ${a.ipAddress}` : ""}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-white border border-[#E4DED2] rounded-2xl p-5">
+            <h2 className="text-[15px] font-bold m-0 mb-1">Notes internes</h2>
+            <p className="text-[#5B6270] text-[12.5px] m-0 mb-3">Visibles par les admins uniquement.</p>
+            <textarea
+              rows={3}
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              placeholder="Ajouter une note…"
+              className="w-full px-3.5 py-2.5 rounded-[10px] border border-[#CFC7B6] text-[13.5px] resize-none"
+            />
+            <div className="mt-2">
+              <ActionButton onClick={saveNote} disabled={busy === "note" || !noteDraft.trim()} tone="primary">
+                Enregistrer la note
+              </ActionButton>
+            </div>
+            {notes.map((n) => (
+              <div key={n.id} className="py-2.5 border-t border-[#EFE9DD] mt-3 first:mt-0">
+                <p className="text-sm m-0 whitespace-pre-line">{n.body}</p>
+                <div className="text-[#5B6270] text-[12px] mt-1">
+                  {n.adminEmail} · {fmtDate(n.createdAt)}
                 </div>
               </div>
             ))}
