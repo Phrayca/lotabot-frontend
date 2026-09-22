@@ -19,6 +19,8 @@ type Dashboard = {
   openTrades: number;
   profileComplete: boolean;
   subscriptionStatus: string;
+  robotStatus: "active" | "paused" | "safety_stop" | "not_connected";
+  robotStatusMessage?: string | null;
 };
 
 function fmt(n: number) {
@@ -28,6 +30,13 @@ function fmt(n: number) {
 function fmtUsd(n: number) {
   return n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+const ROBOT_LABEL: Record<Dashboard["robotStatus"], string> = {
+  active: "Actif",
+  paused: "En pause",
+  safety_stop: "Arrêt de sécurité",
+  not_connected: "Aucun compte MT5 connecté",
+};
 
 export default function HomePage() {
   const toast = useToast();
@@ -48,14 +57,18 @@ export default function HomePage() {
   }, []);
 
   async function toggleRobot() {
+    if (!d || d.robotStatus === "safety_stop") return; // se relance depuis le support, pas ce bouton
     try {
       const r = await api<{ active: boolean }>("/robot/toggle", { method: "PUT" });
       setD((prev) => (prev ? { ...prev, robotActive: r.active } : prev));
-      toast(r.active ? "Robot activé" : "Robot mis en pause");
+      await load(); // recalcule robotStatus côté serveur (paused/active) plutôt que le deviner ici
     } catch (err: any) {
       toast(err.message);
     }
   }
+
+  const status = d?.robotStatus ?? "not_connected";
+  const icon = status === "safety_stop" ? "⛔" : status === "active" ? "🤖" : "⏸️";
 
   return (
     <AppShell>
@@ -100,6 +113,18 @@ export default function HomePage() {
           </Link>
         )}
 
+        {d && d.robotStatus === "safety_stop" && (
+          <div className="flex items-start gap-2.5 bg-redbg border border-[rgba(192,86,59,0.35)] rounded-md2 px-4 py-3 mb-3.5">
+            <span className="text-lg flex-none">⛔</span>
+            <div className="flex-1">
+              <div className="text-[13.5px] font-semibold text-red">Robot en arrêt de sécurité</div>
+              <div className="text-[12px] text-dim leading-relaxed mt-0.5">
+                {d.robotStatusMessage || "Une baisse trop importante a mis le robot en pause sur ce compte."}
+              </div>
+            </div>
+          </div>
+        )}
+
         {d && (!d.profileComplete || !d.mt5Connected) && (
           <StartupPill profileComplete={d.profileComplete} mt5Connected={d.mt5Connected} />
         )}
@@ -125,25 +150,33 @@ export default function HomePage() {
           onClick={toggleRobot}
         >
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-greenbg text-green flex items-center justify-center flex-none">🤖</div>
+            <div
+              className={`w-12 h-12 rounded-full flex items-center justify-center flex-none ${
+                status === "safety_stop" ? "bg-redbg text-red" : "bg-greenbg text-green"
+              }`}
+            >
+              {icon}
+            </div>
             <div>
-              <div className="font-semibold text-[14.5px]">Robot actif</div>
+              <div className="font-semibold text-[14.5px]">Robot {ROBOT_LABEL[status]}</div>
               <div className="text-[12.5px] text-dim">
-                {d?.mt5Connected ? (d?.robotActive ? `${d.pair} - copie auto` : "En pause") : "Aucun compte MT5 connecté"}
+                {status === "not_connected" ? "Aucun compte MT5 connecté" : d?.pair ?? "XAUUSD"}
               </div>
             </div>
           </div>
-          <div
-            className={`w-[46px] h-[27px] rounded-full relative flex-none transition-colors ${
-              d?.robotActive ? "bg-green" : "bg-surface3"
-            }`}
-          >
+          {status !== "safety_stop" && (
             <div
-              className={`absolute top-[3px] w-[21px] h-[21px] rounded-full bg-white transition-all ${
-                d?.robotActive ? "left-[22px]" : "left-[3px]"
+              className={`w-[46px] h-[27px] rounded-full relative flex-none transition-colors ${
+                d?.robotActive ? "bg-green" : "bg-surface3"
               }`}
-            />
-          </div>
+            >
+              <div
+                className={`absolute top-[3px] w-[21px] h-[21px] rounded-full bg-white transition-all ${
+                  d?.robotActive ? "left-[22px]" : "left-[3px]"
+                }`}
+              />
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3 mt-3.5">

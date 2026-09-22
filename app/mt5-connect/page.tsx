@@ -8,19 +8,44 @@ import { useToast } from "@/components/Toast";
 // Serveurs connus, proposés pendant la saisie (le client peut aussi taper le sien).
 const KNOWN_SERVERS = ["JustMarkets-Demo"];
 
+type LegalStatus = { allAccepted: boolean };
+
 export default function MT5ConnectPage() {
   const router = useRouter();
   const toast = useToast();
+  const [checkingLegal, setCheckingLegal] = useState(true);
   const [brokerServer, setBrokerServer] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showGuide, setShowGuide] = useState(false);
+  const [showGuide, setShowGuide] = useState(true);
 
   useEffect(() => {
-    if (!isLoggedIn()) router.replace("/login");
-  }, [router]);
+    if (!isLoggedIn()) {
+      router.replace("/login");
+      return;
+    }
+    // Les 3 documents (CGU, risques, autorisation MT5) doivent être acceptés avant
+    // de pouvoir donner un mot de passe MT5 : sinon on redirige vers cet écran d'abord.
+    api<LegalStatus>("/legal/status")
+      .then((s) => {
+        if (!s.allAccepted) {
+          router.replace("/legal/accepter?next=/mt5-connect");
+          return;
+        }
+        setCheckingLegal(false);
+      })
+      .catch(() => setCheckingLegal(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function copyServerName() {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText("JustMarkets-Demo").catch(() => {});
+    }
+    toast("Nom du serveur copié");
+  }
 
   async function connect() {
     setError("");
@@ -51,8 +76,16 @@ export default function MT5ConnectPage() {
     }
   }
 
+  if (checkingLegal) {
+    return (
+      <div className="min-h-screen max-w-md mx-auto px-6 pt-14">
+        <p className="text-dim text-sm">Chargement…</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen max-w-md mx-auto px-6 pt-14">
+    <div className="min-h-screen max-w-md mx-auto px-6 pt-14 pb-10">
       <h1 className="heading-font text-xl font-bold mb-1">Connecte ton compte MT5</h1>
       <div className="flex items-start gap-2.5 bg-[rgba(201,154,75,0.1)] border border-[rgba(201,154,75,0.25)] rounded-md2 px-4 py-3 mb-4 text-[12.5px] text-goldbright leading-relaxed">
         <span>💡</span>
@@ -67,6 +100,16 @@ export default function MT5ConnectPage() {
         et personne ne peut retirer de l'argent de ton compte avec, seulement trader.
       </p>
 
+      <div className="bg-surface border border-border rounded-md2 px-4 py-3.5 mb-5 flex items-start gap-2.5">
+        <span className="text-[15px] flex-none">💵</span>
+        <p className="text-[12.5px] text-dim leading-relaxed m-0">
+          Capital minimum accepté : <strong className="text-fg">100 $</strong>. En dessous d'environ{" "}
+          <strong className="text-fg">600 $</strong>, le lot minimum imposé par les courtiers pèse plus
+          lourd dans le risque par trade — c'est expliqué dans l'avertissement sur les risques que tu as
+          accepté.
+        </p>
+      </div>
+
       <button
         onClick={() => setShowGuide((v) => !v)}
         className="text-goldbright text-[13.5px] font-semibold mb-4"
@@ -75,13 +118,34 @@ export default function MT5ConnectPage() {
       </button>
 
       {showGuide && (
-        <div className="bg-surface border border-border rounded-md2 p-4 mb-5 flex flex-col gap-3">
+        <div className="bg-surface border border-border rounded-md2 p-4 mb-5 flex flex-col gap-4">
           <GuideStep n={1} text="Ouvre l'application MetaTrader 5 sur ton téléphone ou ton ordinateur." />
           <GuideStep n={2} text="Va dans Réglages (ou le menu ≡) puis touche ton compte de trading." />
           <GuideStep
             n={3}
-            text="Sous 'Serveur', tu trouveras le nom exact à recopier ci-dessous, lettre pour lettre (ex : JustMarkets-Demo). Ne rajoute rien : pas d'espace, pas de « MT5 »."
+            text="Repère la ligne « Serveur ». C'est ce nom, EXACTEMENT (sans espace, sans « MT5 »), qu'il faut recopier ci-dessous."
           />
+
+          <div className="bg-bg border border-border rounded-md2 p-3.5">
+            <div className="text-dimmer text-[11px] uppercase tracking-wide mb-2">Aperçu (exemple)</div>
+            <div className="bg-surface2 rounded-[8px] px-3 py-2.5 flex flex-col gap-1.5">
+              <div className="flex justify-between text-[12px] text-dim">
+                <span>Compte</span>
+                <span>•••• 2564</span>
+              </div>
+              <div className="flex justify-between items-center text-[12px]">
+                <span className="text-dim">Serveur</span>
+                <span className="font-mono font-semibold text-fg">JustMarkets-Demo</span>
+              </div>
+            </div>
+            <button
+              onClick={copyServerName}
+              className="mt-3 w-full text-center text-goldbright text-[12.5px] font-semibold py-2"
+            >
+              Copier « JustMarkets-Demo »
+            </button>
+          </div>
+
           <GuideStep n={4} text="Le numéro de compte est affiché juste au-dessus du serveur." />
           <GuideStep
             n={5}

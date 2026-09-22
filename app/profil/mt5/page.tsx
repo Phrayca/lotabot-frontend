@@ -17,6 +17,7 @@ type MT5Status = {
 const BRIDGE_LABEL: Record<string, { text: string; tone: "green" | "gold" | "dim" }> = {
   running: { text: "Robot actif sur ce compte", tone: "green" },
   pending: { text: "Mise en route en cours…", tone: "gold" },
+  safety_stop: { text: "Arrêt de sécurité", tone: "dim" },
   error: { text: "Problème de connexion", tone: "dim" },
   disconnected: { text: "Non connecté", tone: "dim" },
 };
@@ -38,7 +39,8 @@ export default function MT5StatusPage() {
 
   useEffect(() => {
     load();
-    // L'état change tout seul (mise en route, erreur corrigée) : on le rafraîchit toutes les 10 s
+    // L'état change tout seul (mise en route, erreur corrigée, arrêt de sécurité) : on le
+    // rafraîchit toutes les 10 s
     const timer = setInterval(() => load(true), 10000);
     return () => clearInterval(timer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -61,7 +63,8 @@ export default function MT5StatusPage() {
   }
 
   const bridge = m?.connected ? BRIDGE_LABEL[m.bridgeStatus || "pending"] : BRIDGE_LABEL.disconnected;
-  const hasError = m?.connected && m.bridgeStatus === "error";
+  const isSafetyStop = m?.connected && m.bridgeStatus === "safety_stop";
+  const hasError = m?.connected && (m.bridgeStatus === "error" || isSafetyStop);
   const isPending = m?.connected && (m.bridgeStatus === "pending" || !m.bridgeStatus);
 
   return (
@@ -88,12 +91,19 @@ export default function MT5StatusPage() {
           </p>
         )}
 
-        {hasError && m?.bridgeError && (
+        {isSafetyStop && (
+          <p className="text-red text-[12.5px] leading-relaxed">
+            {m?.bridgeError ||
+              "Le robot s'est arrêté automatiquement après une baisse trop importante depuis son plus haut. Contacte le support pour le relancer."}
+          </p>
+        )}
+
+        {hasError && !isSafetyStop && m?.bridgeError && (
           <p className="text-red text-[12.5px] leading-relaxed">{m.bridgeError}</p>
         )}
 
         <Button variant="ghost" onClick={() => router.push("/mt5-connect")}>
-          {hasError ? "Corriger mes identifiants" : "Reconnecter un compte"}
+          {hasError && !isSafetyStop ? "Corriger mes identifiants" : "Reconnecter un compte"}
         </Button>
         {m?.connected && (
           <Button variant="dangerText" onClick={disconnect}>
