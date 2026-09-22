@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api, isLoggedIn } from "@/lib/api";
 import { Button, Switch } from "@/components/ui";
@@ -8,7 +8,23 @@ import { useToast } from "@/components/Toast";
 type LegalDoc = { slug: string; title: string; version: string; body: string };
 type LegalStatus = { pending: LegalDoc[]; allAccepted: boolean };
 
+// useSearchParams() (pour lire ?next=...) doit être entouré d'un <Suspense>,
+// sinon la génération statique du site échoue à la construction.
 export default function LegalAccepterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen max-w-md mx-auto px-6 pt-14">
+          <p className="text-dim text-sm">Chargement…</p>
+        </div>
+      }
+    >
+      <LegalAccepterContent />
+    </Suspense>
+  );
+}
+
+function LegalAccepterContent() {
   const router = useRouter();
   const toast = useToast();
   const searchParams = useSearchParams();
