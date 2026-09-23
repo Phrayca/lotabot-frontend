@@ -33,7 +33,6 @@ type ClientDetail = {
   legalAcceptances: LegalAcceptance[];
   recentTrades: Trade[];
 };
-
 const RISK_LABELS = ["Prudent", "Modéré", "Agressif"];
 const ROBOT_LABEL: Record<ClientDetail["robotStatus"], string> = {
   active: "Actif",
@@ -88,6 +87,8 @@ export default function AdminClientDetailPage() {
   const [error, setError] = useState("");
   const [actionMsg, setActionMsg] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
 
   function load() {
     return Promise.all([
@@ -174,6 +175,19 @@ export default function AdminClientDetailPage() {
     } catch (err: any) {
       setActionMsg(err.message);
     } finally {
+      setBusy(null);
+    }
+  }
+
+  async function deleteClient() {
+    if (!c || deleteConfirm.trim() !== c.phone) return;
+    setBusy("delete");
+    setActionMsg("");
+    try {
+      await adminApi(`/admin/clients/${c.id}`, { method: "DELETE", body: { confirmPhone: deleteConfirm.trim() } });
+      router.push("/admin/clients");
+    } catch (err: any) {
+      setActionMsg(err.message);
       setBusy(null);
     }
   }
@@ -389,6 +403,43 @@ export default function AdminClientDetailPage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="bg-white border border-[#E3B8AE] rounded-2xl p-5">
+            <h2 className="text-[15px] font-bold m-0 text-[#9C2F1B]">Zone dangereuse</h2>
+            <p className="text-[#5B6270] text-[12.5px] m-0 mt-1 mb-3">
+              Supprime définitivement ce client : profil, abonnement, connexion MT5, trades, contrats
+              acceptés et conversations de support. Impossible de revenir en arrière.
+            </p>
+            {(c.subscriptionStatus === "active" || c.mt5Connected) && (
+              <p className="text-[#9C2F1B] text-[12.5px] font-semibold mb-3">
+                ⚠️ Ce compte semble encore actif{c.mt5Connected ? " (compte MT5 connecté)" : ""}. Vérifie avant de
+                supprimer.
+              </p>
+            )}
+            {!showDelete ? (
+              <ActionButton onClick={() => setShowDelete(true)} tone="danger">
+                Supprimer ce client
+              </ActionButton>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                <label className="text-[12.5px] text-[#5B6270]">
+                  Recopie le numéro de téléphone du client pour confirmer : <strong>{c.phone}</strong>
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirm}
+                  onChange={(e) => setDeleteConfirm(e.target.value)}
+                  className="min-h-[40px] px-3 rounded-[10px] border border-[#CFC7B6] text-[14px]"
+                />
+                <div className="flex gap-2">
+                  <ActionButton onClick={deleteClient} disabled={busy === "delete" || deleteConfirm.trim() !== c.phone} tone="danger">
+                    {busy === "delete" ? "Suppression…" : "Confirmer la suppression définitive"}
+                  </ActionButton>
+                  <ActionButton onClick={() => { setShowDelete(false); setDeleteConfirm(""); }}>Annuler</ActionButton>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

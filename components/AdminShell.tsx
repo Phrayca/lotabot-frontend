@@ -1,7 +1,8 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { clearAdminToken } from "@/lib/adminApi";
+import { adminApi, clearAdminToken, isAdminLoggedIn } from "@/lib/adminApi";
 
 const NAV = [
   { href: "/admin/clients", label: "Clients" },
@@ -11,6 +12,19 @@ const NAV = [
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [supportUnread, setSupportUnread] = useState(0);
+
+  useEffect(() => {
+    if (!isAdminLoggedIn()) return;
+    function load() {
+      adminApi<{ count: number }>("/admin/support/unread-count")
+        .then((r) => setSupportUnread(r.count))
+        .catch(() => {});
+    }
+    load();
+    const timer = setInterval(load, 20000);
+    return () => clearInterval(timer);
+  }, []);
 
   function logout() {
     clearAdminToken();
@@ -39,7 +53,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 active ? "bg-[#1C2839] text-white font-semibold" : "text-[#C9D1DD]"
               }`}
             >
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.href === "/admin/support" && supportUnread > 0 && (
+                <span className="min-w-[19px] h-[19px] px-1 rounded-full bg-[#C99A4B] text-[#1B1305] text-[11px] font-bold flex items-center justify-center">
+                  {supportUnread}
+                </span>
+              )}
             </Link>
           );
         })}

@@ -33,6 +33,7 @@ export default function ProfilPage() {
   const router = useRouter();
   const toast = useToast();
   const [p, setP] = useState<Profile | null>(null);
+  const [supportUnread, setSupportUnread] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -40,6 +41,9 @@ export default function ProfilPage() {
     api<Profile>("/profile")
       .then(setP)
       .catch((err) => toast(err.message));
+    api<{ count: number }>("/support/unread-count")
+      .then((r) => setSupportUnread(r.count))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -95,6 +99,20 @@ export default function ProfilPage() {
               <span>Compte MT5 connecté</span>
             </div>
             <span className="text-dim">›</span>
+          </RowItem>
+          <RowItem href="/profil/support">
+            <div className="flex items-center gap-3">
+              <span>💬</span>
+              <span>Support</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {supportUnread > 0 && (
+                <span className="min-w-[19px] h-[19px] px-1 rounded-full bg-goldbright text-bg text-[11px] font-bold flex items-center justify-center">
+                  {supportUnread}
+                </span>
+              )}
+              <span className="text-dim">›</span>
+            </div>
           </RowItem>
           <RowItem href="/profil/notifications">
             <div className="flex items-center gap-3">
