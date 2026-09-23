@@ -5,6 +5,7 @@ import { clearAdminToken } from "@/lib/adminApi";
 
 const NAV = [
   { href: "/admin/clients", label: "Clients" },
+  { href: "/admin/support", label: "Support" },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
