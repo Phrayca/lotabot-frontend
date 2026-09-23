@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api, isLoggedIn } from "@/lib/api";
-import { BackHeader, Button } from "@/components/ui";
+import { BackHeader } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 
 type Message = { id: string; senderType: "client" | "admin"; senderLabel?: string; body: string; createdAt: string };
@@ -106,17 +106,21 @@ export default function SupportThreadPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="px-5 pt-3 flex items-end gap-2.5">
+      <div className="px-5 pt-3 pb-1 flex items-end gap-2.5">
         <textarea
-          rows={1}
+          rows={2}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Écris ton message…"
-          className="flex-1 px-3.5 py-2.5 rounded-md2 border border-border bg-surface2 text-[14px] resize-none"
+          className="flex-1 min-w-0 min-h-[52px] px-3.5 py-2.5 rounded-md2 border border-border bg-surface2 text-[14px] leading-relaxed resize-none"
         />
-        <Button onClick={send} disabled={sending || !draft.trim()}>
+        <button
+          onClick={send}
+          disabled={sending || !draft.trim()}
+          className="flex-none min-h-[44px] px-5 rounded-md2 bg-goldbright text-bg font-bold text-[14px] disabled:opacity-50"
+        >
           Envoyer
-        </Button>
+        </button>
       </div>
     </div>
   );
