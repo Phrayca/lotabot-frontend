@@ -20,15 +20,18 @@ function LessonContent() {
   const router = useRouter();
   const id = params.get("id") || "";
   const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
+    setLoading(true);
     api<CourseDetail>(`/courses/${id}`)
       .then(setCourse)
       .catch((err) => {
         toast(err.message);
         router.push("/formation");
-      });
+      })
+      .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -43,9 +46,16 @@ function LessonContent() {
           <span className="text-xs text-dimmer">{course ? `${course.durationMin} min de lecture` : ""}</span>
         </div>
 
-        <div className="text-ink text-[14.5px] leading-[1.75] whitespace-pre-line">
-          {course?.body || "Chargement…"}
-        </div>
+        {/* Distinguer "en train de charger" (loading) de "chargé, mais rien à afficher"
+            (course.body vide) : sinon un contenu manquant reste bloqué sur "Chargement…"
+            pour toujours, même une fois la reponse du serveur bien recue. */}
+        {loading && <p className="text-dim text-[14.5px]">Chargement…</p>}
+        {!loading && course && course.body && (
+          <div className="text-ink text-[14.5px] leading-[1.75] whitespace-pre-line">{course.body}</div>
+        )}
+        {!loading && course && !course.body && (
+          <p className="text-dim text-[14.5px]">Le contenu écrit de cette leçon arrive bientôt.</p>
+        )}
 
         <div className="flex items-center gap-2.5 bg-surface2 border border-border rounded-md2 px-4 py-3 mt-7 text-[12.5px] text-dim">
           <span>🎥</span>
