@@ -5,7 +5,16 @@ import Link from "next/link";
 import { adminApi, isAdminLoggedIn } from "@/lib/adminApi";
 import AdminShell from "@/components/AdminShell";
 
-type Message = { id: string; senderType: "client" | "admin"; senderLabel?: string; body: string; createdAt: string };
+type Message = {
+  id: string;
+  senderType: "client" | "admin";
+  senderLabel?: string;
+  body: string;
+  attachmentData?: string;
+  attachmentName?: string;
+  attachmentIsImage?: boolean;
+  createdAt: string;
+};
 type TicketDetail = { id: string; subject: string; status: "open" | "in_progress" | "resolved"; messages: Message[] };
 
 const STATUS_LABEL: Record<TicketDetail["status"], string> = {
@@ -20,8 +29,19 @@ const QUICK_REPLIES = [
   "Le capital minimum pour que le robot puisse trader normalement est d'environ 600 $.",
 ];
 
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Impossible de lire ce fichier"));
+    reader.readAsDataURL(file);
+  });
 }
 
 export default function AdminSupportThreadPage() {
@@ -29,9 +49,11 @@ export default function AdminSupportThreadPage() {
   const params = useParams<{ id: string }>();
   const [t, setT] = useState<TicketDetail | null>(null);
   const [draft, setDraft] = useState("");
+  const [attachment, setAttachment] = useState<{ data: string; name: string } | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   function load(scroll = false) {
     return adminApi<TicketDetail>(`/admin/support/${params.id}`)
@@ -54,12 +76,32 @@ export default function AdminSupportThreadPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
+  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      setError("Ce fichier dépasse 5 Mo, choisis-en un plus léger.");
+      return;
+    }
+    try {
+      const data = await readFileAsDataUrl(file);
+      setAttachment({ data, name: file.name });
+    } catch (err: any) {
+      setError(err.message);
+    }
+  }
+
   async function send() {
-    if (!draft.trim()) return;
+    if (!draft.trim() && !attachment) return;
     setBusy(true);
     try {
-      await adminApi(`/admin/support/${params.id}/reply`, { method: "POST", body: { body: draft.trim() } });
+      await adminApi(`/admin/support/${params.id}/reply`, {
+        method: "POST",
+        body: { body: draft.trim(), attachmentData: attachment?.data, attachmentName: attachment?.name },
+      });
       setDraft("");
+      setAttachment(null);
       await load(true);
     } catch (err: any) {
       setError(err.message);
@@ -137,7 +179,25 @@ export default function AdminSupportThreadPage() {
                   m.senderType === "admin" ? "bg-[#F3EFE7]" : "bg-[#E4ECF8]"
                 }`}
               >
-                <p className="m-0 whitespace-pre-line">{m.body}</p>
+                {m.attachmentData && m.attachmentIsImage && (
+                  <a href={m.attachmentData} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={m.attachmentData}
+                      alt={m.attachmentName || "Pièce jointe"}
+                      className="max-w-full rounded-[8px] mb-1.5 block"
+                    />
+                  </a>
+                )}
+                {m.attachmentData && !m.attachmentIsImage && (
+                  <a
+                    href={m.attachmentData}
+                    download={m.attachmentName || "fichier"}
+                    className="flex items-center gap-2 bg-white border border-[#CFC7B6] rounded-[8px] px-3 py-2 mb-1.5 text-[12.5px]"
+                  >
+                    📎 {m.attachmentName || "Fichier joint"}
+                  </a>
+                )}
+                {m.body && <p className="m-0 whitespace-pre-line">{m.body}</p>}
                 <div className="text-[#5B6270] text-[11px] mt-1">
                   {m.senderType === "admin" ? m.senderLabel ?? "Toi" : "Client"} · {fmtTime(m.createdAt)}
                 </div>
@@ -159,7 +219,23 @@ export default function AdminSupportThreadPage() {
               </button>
             ))}
           </div>
+          {attachment && (
+            <div className="flex items-center justify-between bg-[#F3EFE7] border border-[#CFC7B6] rounded-[10px] px-3.5 py-2 mb-2.5 text-[12.5px]">
+              <span className="truncate pr-2">📎 {attachment.name}</span>
+              <button onClick={() => setAttachment(null)} className="text-[#5B6270] flex-none">
+                ✕
+              </button>
+            </div>
+          )}
           <div className="flex items-end gap-2.5">
+            <input ref={fileRef} type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={onPickFile} />
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="flex-none min-h-[44px] w-[44px] rounded-[10px] border border-[#CFC7B6] bg-white text-[#5B6270] text-[18px]"
+              aria-label="Joindre un fichier"
+            >
+              📎
+            </button>
             <textarea
               rows={2}
               value={draft}
@@ -169,7 +245,7 @@ export default function AdminSupportThreadPage() {
             />
             <button
               onClick={send}
-              disabled={busy || !draft.trim()}
+              disabled={busy || (!draft.trim() && !attachment)}
               className="min-h-[44px] px-5 rounded-[10px] bg-[#C99A4B] text-[#1B1305] font-bold text-[14px] disabled:opacity-50"
             >
               Envoyer
