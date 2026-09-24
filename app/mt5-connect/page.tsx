@@ -103,8 +103,8 @@ export default function MT5ConnectPage() {
       <div className="bg-surface border border-border rounded-md2 px-4 py-3.5 mb-5 flex items-start gap-2.5">
         <span className="text-[15px] flex-none">💵</span>
         <p className="text-[12.5px] text-dim leading-relaxed m-0">
-          Capital minimum accepté : <strong className="text-fg">100 $</strong>. En dessous d'environ{" "}
-          <strong className="text-fg">600 $</strong>, le lot minimum imposé par les courtiers pèse plus
+          Capital minimum accepté : <strong className="text-ink">100 $</strong>. En dessous d'environ{" "}
+          <strong className="text-ink">600 $</strong>, le lot minimum imposé par les courtiers pèse plus
           lourd dans le risque par trade — c'est expliqué dans l'avertissement sur les risques que tu as
           accepté.
         </p>
@@ -135,7 +135,7 @@ export default function MT5ConnectPage() {
               </div>
               <div className="flex justify-between items-center text-[12px]">
                 <span className="text-dim">Serveur</span>
-                <span className="font-mono font-semibold text-fg">JustMarkets-Demo</span>
+                <span className="font-mono font-semibold text-ink">JustMarkets-Demo</span>
               </div>
             </div>
             <button

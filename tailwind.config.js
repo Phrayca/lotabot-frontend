@@ -4,21 +4,25 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: "#10151c",
-        frame: "#0b0f14",
-        surface: "#1a212b",
-        surface2: "#212a35",
-        surface3: "#28323e",
-        border: "rgba(255,255,255,0.08)",
-        ink: "#eef1f4",
-        dim: "#8e99a8",
-        dimmer: "#66707d",
-        gold: "#c99a4b",
-        goldbright: "#e4b565",
-        green: "#3fa873",
-        greenbg: "rgba(63,168,115,0.12)",
-        red: "#c0563b",
-        redbg: "rgba(192,86,59,0.12)",
+        // Les couleurs pointent maintenant vers des variables CSS (definies dans
+        // globals.css, avec un jeu de valeurs pour le mode sombre et un pour le mode clair)
+        // au lieu de couleurs fixes : la meme classe Tailwind (bg-bg, text-dim, etc.)
+        // suit donc automatiquement le theme choisi, sans rien changer nulle part ailleurs.
+        bg: "var(--color-bg)",
+        frame: "var(--color-frame)",
+        surface: "var(--color-surface)",
+        surface2: "var(--color-surface2)",
+        surface3: "var(--color-surface3)",
+        border: "var(--color-border)",
+        ink: "var(--color-ink)",
+        dim: "var(--color-dim)",
+        dimmer: "var(--color-dimmer)",
+        gold: "var(--color-gold)",
+        goldbright: "var(--color-goldbright)",
+        green: "var(--color-green)",
+        greenbg: "var(--color-greenbg)",
+        red: "var(--color-red)",
+        redbg: "var(--color-redbg)",
       },
       fontFamily: {
         heading: ["Sora", "system-ui", "sans-serif"],

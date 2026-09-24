@@ -4,10 +4,55 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-html, body {
-  background: #080a0d;
-  color: #eef1f4;
+/* Palette sombre (valeurs d'origine de l'app, inchangees) */
+:root {
+  --color-bg: #10151c;
+  --color-frame: #0b0f14;
+  --color-surface: #1a212b;
+  --color-surface2: #212a35;
+  --color-surface3: #28323e;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-ink: #eef1f4;
+  --color-dim: #8e99a8;
+  --color-dimmer: #66707d;
+  --color-gold: #c99a4b;
+  --color-goldbright: #e4b565;
+  --color-green: #3fa873;
+  --color-greenbg: rgba(63, 168, 115, 0.12);
+  --color-red: #c0563b;
+  --color-redbg: rgba(192, 86, 59, 0.12);
+  /* Fond de la page derriere le cadre mobile (max-w-md) : plus sombre que --color-bg,
+     c'etait deja le cas avant, garde ici sous son propre nom plutot que confondu avec "bg". */
+  --html-bg: #080a0d;
+}
+
+/* Palette claire, meme structure, tons chauds assortis a l'accent dore existant plutot
+   qu'un blanc/gris neutre generique. */
+[data-theme="light"] {
+  --color-bg: #f7f4ee;
+  --color-frame: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface2: #f1ede4;
+  --color-surface3: #e7e0d2;
+  --color-border: rgba(20, 16, 8, 0.1);
+  --color-ink: #211c14;
+  --color-dim: #6b6152;
+  --color-dimmer: #948a7a;
+  --color-gold: #a9793a;
+  --color-goldbright: #92652f;
+  --color-green: #227351;
+  --color-greenbg: rgba(34, 115, 81, 0.12);
+  --color-red: #9c3f28;
+  --color-redbg: rgba(156, 63, 40, 0.1);
+  --html-bg: #efe9db;
+}
+
+html,
+body {
+  background: var(--html-bg);
+  color: var(--color-ink);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .heading-font {
@@ -16,15 +61,15 @@ html, body {
 
 input[type=text], input[type=tel], input[type=email], input[type=password], input[type=number] {
   width: 100%;
-  background: #212a35;
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #eef1f4;
+  background: var(--color-surface2);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
   padding: 13px 14px;
   border-radius: 14px;
   font-size: 15px;
   font-family: inherit;
 }
 input:focus {
-  outline: 2px solid #c99a4b;
+  outline: 2px solid var(--color-goldbright);
   outline-offset: 1px;
 }

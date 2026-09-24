@@ -135,7 +135,7 @@ export default function SupportThreadPage() {
           <div key={m.id} className={`flex ${m.senderType === "client" ? "justify-end" : "justify-start"}`}>
             <div
               className={`max-w-[80%] rounded-md2 px-3.5 py-2.5 text-[13.5px] leading-relaxed ${
-                m.senderType === "client" ? "bg-[rgba(201,154,75,0.15)] text-fg" : "bg-surface border border-border"
+                m.senderType === "client" ? "bg-[rgba(201,154,75,0.15)] text-ink" : "bg-surface border border-border"
               }`}
             >
               {m.attachmentData && m.attachmentIsImage && (

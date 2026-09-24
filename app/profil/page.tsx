@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, setToken } from "@/lib/api";
 import AppShell from "@/components/AppShell";
-import { RowItem, Button } from "@/components/ui";
+import { RowItem, Button, Switch } from "@/components/ui";
 import { useToast } from "@/components/Toast";
+import { useTheme } from "@/components/ThemeProvider";
 
 type Profile = {
   fullName: string;
@@ -32,6 +33,7 @@ const STATUS_LABEL: Record<string, string> = {
 export default function ProfilPage() {
   const router = useRouter();
   const toast = useToast();
+  const { theme, toggleTheme } = useTheme();
   const [p, setP] = useState<Profile | null>(null);
   const [supportUnread, setSupportUnread] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -121,6 +123,13 @@ export default function ProfilPage() {
             </div>
             <span className="text-dim">›</span>
           </RowItem>
+          <div className="flex items-center justify-between bg-surface border border-border rounded-md2 px-4 py-[15px]">
+            <div className="flex items-center gap-3">
+              <span>{theme === "dark" ? "🌙" : "☀️"}</span>
+              <span>Mode {theme === "dark" ? "sombre" : "clair"}</span>
+            </div>
+            <Switch on={theme === "light"} onClick={toggleTheme} />
+          </div>
         </div>
         <Button variant="dangerText" onClick={logout} className="mt-6 text-left justify-start">
           ↩ Se déconnecter
