@@ -5,7 +5,7 @@
 // Si le projet a deja une variable d'environnement pour l'URL du backend (ex :
 // NEXT_PUBLIC_API_BASE), remplace la ligne ci-dessous par
 // process.env.NEXT_PUBLIC_API_BASE ?? "https://lotabot-backend.onrender.com/api".
-const API_BASE = "https://lotabot-backend.onrender.com/api";
+export const API_BASE = "https://lotabot-backend.onrender.com/api";
 const TOKEN_KEY = "lotabot_admin_token";
 
 export function getAdminToken(): string | null {

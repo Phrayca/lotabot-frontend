@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { adminApi, isAdminLoggedIn } from "@/lib/adminApi";
+import { adminApi, getAdminToken, isAdminLoggedIn, API_BASE } from "@/lib/adminApi";
 import AdminShell from "@/components/AdminShell";
 
 type LegalAcceptance = { slug: string; version: string; acceptedAt: string; ipAddress?: string };
@@ -22,22 +22,31 @@ type ClientDetail = {
   mt5Connected: boolean;
   brokerServer?: string;
   accountMasked?: string;
-  robotStatus: "active" | "paused" | "safety_stop" | "not_connected";
+  robotStatus: "active" | "paused" | "safety_stop" | "admin_disabled" | "not_connected";
   robotStatusMessage?: string;
   riskLevel: number;
   lot: number;
   maxPositions: number;
+  pair: string;
+  adminDisabled: boolean;
+  adminDisabledReason?: string;
   balanceUsd: number;
   weekChangePct: number;
   openTrades: number;
   legalAcceptances: LegalAcceptance[];
   recentTrades: Trade[];
 };
+const PAIR_LABELS: Record<string, string> = {
+  XAUUSD: "Or (XAUUSD)",
+  EURUSD: "Euro / Dollar (EURUSD)",
+  BTCUSD: "Bitcoin (BTCUSD)",
+};
 const RISK_LABELS = ["Prudent", "Modéré", "Agressif"];
 const ROBOT_LABEL: Record<ClientDetail["robotStatus"], string> = {
   active: "Actif",
   paused: "En pause",
   safety_stop: "Arrêt de sécurité",
+  admin_disabled: "Désactivé par l'admin",
   not_connected: "Non connecté",
 };
 const DOC_TITLES: Record<string, string> = {
@@ -142,6 +151,41 @@ export default function AdminClientDetailPage() {
     }
   }
 
+  async function lockRobot() {
+    if (!c) return;
+    const reason = window.prompt(
+      "Pourquoi désactives-tu le robot sur ce compte ? (visible par le client, optionnel)",
+      ""
+    );
+    if (reason === null) return; // annulé
+    setBusy("lock");
+    setActionMsg("");
+    try {
+      await adminApi(`/admin/clients/${c.id}/robot/lock`, { method: "POST", body: { reason } });
+      await load();
+      setActionMsg("Robot désactivé : le client ne peut plus le réactiver lui-même.");
+    } catch (err: any) {
+      setActionMsg(err.message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function unlockRobot() {
+    if (!c) return;
+    setBusy("unlock");
+    setActionMsg("");
+    try {
+      await adminApi(`/admin/clients/${c.id}/robot/unlock`, { method: "POST" });
+      await load();
+      setActionMsg("Robot réactivable par le client à nouveau.");
+    } catch (err: any) {
+      setActionMsg(err.message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function extendSubscription() {
     if (!c) return;
     const days = parseInt(extendDays, 10);
@@ -176,6 +220,55 @@ export default function AdminClientDetailPage() {
       setActionMsg(err.message);
     } finally {
       setBusy(null);
+    }
+  }
+
+  const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
+  const [docText, setDocText] = useState<Record<string, string>>({});
+  const [downloadingPdf, setDownloadingPdf] = useState<string | null>(null);
+
+  async function toggleDocText(slug: string, version: string) {
+    const key = `${slug}-${version}`;
+    if (expandedDoc === key) {
+      setExpandedDoc(null);
+      return;
+    }
+    setExpandedDoc(key);
+    if (!docText[key]) {
+      try {
+        const res = await adminApi<{ body: string }>(`/admin/clients/${c!.id}/legal/${slug}/${version}`);
+        setDocText((prev) => ({ ...prev, [key]: res.body }));
+      } catch (err: any) {
+        setActionMsg(err.message);
+      }
+    }
+  }
+
+  async function downloadDocPdf(slug: string, version: string) {
+    if (!c) return;
+    const key = `${slug}-${version}`;
+    setDownloadingPdf(key);
+    setActionMsg("");
+    try {
+      const token = getAdminToken();
+      const res = await fetch(
+        `${API_BASE}/admin/clients/${c.id}/legal/${slug}/${version}/pdf`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+      if (!res.ok) throw new Error(`Erreur ${res.status} lors du téléchargement`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${slug}-v${version}-${c.phone.replace(/\D/g, "")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setActionMsg(err.message);
+    } finally {
+      setDownloadingPdf(null);
     }
   }
 
@@ -243,12 +336,28 @@ export default function AdminClientDetailPage() {
             Arrêt de sécurité
           </span>
         )}
+        {c.adminDisabled && (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-semibold bg-[#FBE7E2] text-[#9C2F1B]">
+            Désactivé par l'admin
+          </span>
+        )}
         <span className="flex-1" />
         {c.mt5Connected && (
           <>
-            <ActionButton onClick={toggleRobot} disabled={busy === "robot"}>
-              {c.robotStatus === "active" ? "Mettre en pause" : "Réactiver le robot"}
-            </ActionButton>
+            {c.adminDisabled ? (
+              <ActionButton onClick={unlockRobot} disabled={busy === "unlock"} tone="primary">
+                Réactiver le robot (lever le blocage)
+              </ActionButton>
+            ) : (
+              <>
+                <ActionButton onClick={toggleRobot} disabled={busy === "robot"}>
+                  {c.robotStatus === "active" ? "Mettre en pause" : "Réactiver le robot"}
+                </ActionButton>
+                <ActionButton onClick={lockRobot} disabled={busy === "lock"} tone="danger">
+                  Désactiver (le client ne pourra pas réactiver)
+                </ActionButton>
+              </>
+            )}
             <ActionButton onClick={restartMt5} disabled={busy === "restart"} tone={c.robotStatus === "safety_stop" ? "primary" : "default"}>
               {c.robotStatus === "safety_stop" ? "Remettre à zéro (redémarrer)" : "Redémarrer la connexion"}
             </ActionButton>
@@ -257,6 +366,19 @@ export default function AdminClientDetailPage() {
       </div>
 
       {actionMsg && <p className="text-[#5B6270] text-[13px] mb-4">{actionMsg}</p>}
+
+      {c.adminDisabled && (
+        <div className="bg-[#FBE7E2] border border-[#E3B8AE] rounded-2xl px-5 py-4 mb-6">
+          <div className="font-bold text-[#9C2F1B]">Le robot est désactivé par l'admin</div>
+          <div className="text-[#6E2314] mt-1 text-sm">
+            {c.adminDisabledReason || "Aucune raison indiquée."}
+          </div>
+          <div className="text-[#6E2314] mt-2 text-[12.5px]">
+            Le client voit ce message et ne peut pas réactiver le robot lui-même tant que tu n'as pas cliqué sur
+            « Réactiver le robot » ci-dessus.
+          </div>
+        </div>
+      )}
 
       {c.robotStatus === "safety_stop" && (
         <div className="bg-[#FBE7E2] border border-[#E3B8AE] rounded-2xl px-5 py-4 mb-6">
@@ -306,6 +428,8 @@ export default function AdminClientDetailPage() {
             <dl className="grid grid-cols-[150px_1fr] gap-y-2.5 mt-3.5 text-sm">
               <dt className="text-[#5B6270]">Statut</dt>
               <dd className="font-semibold m-0">{ROBOT_LABEL[c.robotStatus]}</dd>
+              <dt className="text-[#5B6270]">Paire tradée</dt>
+              <dd className="font-semibold m-0">{PAIR_LABELS[c.pair] ?? c.pair}</dd>
               <dt className="text-[#5B6270]">Niveau de risque</dt>
               <dd className="font-semibold m-0">{RISK_LABELS[c.riskLevel] ?? c.riskLevel}</dd>
               <dt className="text-[#5B6270]">Lot maximum</dt>
@@ -367,17 +491,44 @@ export default function AdminClientDetailPage() {
             {c.legalAcceptances.length === 0 && (
               <p className="text-[#5B6270] text-sm m-0">Aucun document accepté pour l'instant.</p>
             )}
-            {c.legalAcceptances.map((a, i) => (
-              <div key={i} className="py-2.5 border-t border-[#EFE9DD] first:border-t-0">
-                <div className="font-semibold text-sm">
-                  {DOC_TITLES[a.slug] ?? a.slug} · v{a.version}
+            {c.legalAcceptances.map((a, i) => {
+              const key = `${a.slug}-${a.version}`;
+              return (
+                <div key={i} className="py-2.5 border-t border-[#EFE9DD] first:border-t-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="font-semibold text-sm">
+                        {DOC_TITLES[a.slug] ?? a.slug} · v{a.version}
+                      </div>
+                      <div className="text-[#5B6270] text-[12.5px] mt-0.5">
+                        {fmtDate(a.acceptedAt)}
+                        {a.ipAddress ? ` · IP ${a.ipAddress}` : ""}
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5 flex-none">
+                      <button
+                        onClick={() => toggleDocText(a.slug, a.version)}
+                        className="text-[12px] font-semibold text-[#1F4E8C] px-2 py-1"
+                      >
+                        {expandedDoc === key ? "Masquer" : "Voir"}
+                      </button>
+                      <button
+                        onClick={() => downloadDocPdf(a.slug, a.version)}
+                        disabled={downloadingPdf === key}
+                        className="text-[12px] font-semibold text-[#1F4E8C] px-2 py-1 disabled:opacity-50"
+                      >
+                        {downloadingPdf === key ? "…" : "PDF"}
+                      </button>
+                    </div>
+                  </div>
+                  {expandedDoc === key && (
+                    <div className="mt-2 bg-[#FAF7F0] border border-[#E4DED2] rounded-[10px] p-3 text-[12.5px] text-[#4A5160] leading-relaxed whitespace-pre-line max-h-64 overflow-y-auto">
+                      {docText[key] ?? "Chargement…"}
+                    </div>
+                  )}
                 </div>
-                <div className="text-[#5B6270] text-[12.5px] mt-0.5">
-                  {fmtDate(a.acceptedAt)}
-                  {a.ipAddress ? ` · IP ${a.ipAddress}` : ""}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="bg-white border border-[#E4DED2] rounded-2xl p-5">

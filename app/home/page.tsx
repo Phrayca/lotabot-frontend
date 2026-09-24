@@ -19,7 +19,7 @@ type Dashboard = {
   openTrades: number;
   profileComplete: boolean;
   subscriptionStatus: string;
-  robotStatus: "active" | "paused" | "safety_stop" | "not_connected";
+  robotStatus: "active" | "paused" | "safety_stop" | "admin_disabled" | "not_connected";
   robotStatusMessage?: string | null;
 };
 
@@ -35,6 +35,7 @@ const ROBOT_LABEL: Record<Dashboard["robotStatus"], string> = {
   active: "Actif",
   paused: "En pause",
   safety_stop: "Arrêt de sécurité",
+  admin_disabled: "Désactivé",
   not_connected: "Aucun compte MT5 connecté",
 };
 
@@ -57,7 +58,7 @@ export default function HomePage() {
   }, []);
 
   async function toggleRobot() {
-    if (!d || d.robotStatus === "safety_stop") return; // se relance depuis le support, pas ce bouton
+    if (!d || d.robotStatus === "safety_stop" || d.robotStatus === "admin_disabled") return; // se relance depuis le support, pas ce bouton
     try {
       const r = await api<{ active: boolean }>("/robot/toggle", { method: "PUT" });
       setD((prev) => (prev ? { ...prev, robotActive: r.active } : prev));
@@ -68,7 +69,7 @@ export default function HomePage() {
   }
 
   const status = d?.robotStatus ?? "not_connected";
-  const icon = status === "safety_stop" ? "⛔" : status === "active" ? "🤖" : "⏸️";
+  const icon = status === "safety_stop" || status === "admin_disabled" ? "⛔" : status === "active" ? "🤖" : "⏸️";
 
   return (
     <AppShell>
@@ -125,6 +126,23 @@ export default function HomePage() {
           </div>
         )}
 
+        {d && d.robotStatus === "admin_disabled" && (
+          <div className="flex items-start gap-2.5 bg-redbg border border-[rgba(192,86,59,0.35)] rounded-md2 px-4 py-3 mb-3.5">
+            <span className="text-lg flex-none">⛔</span>
+            <div className="flex-1">
+              <div className="text-[13.5px] font-semibold text-red">
+                L'équipe Lotabot a désactivé le robot sur ton compte
+              </div>
+              <div className="text-[12px] text-dim leading-relaxed mt-0.5">
+                {d.robotStatusMessage || "Contacte le support pour en savoir plus."}
+              </div>
+              <Link href="/profil/support" className="text-[12px] font-semibold text-goldbright mt-1.5 inline-block">
+                Écrire au support →
+              </Link>
+            </div>
+          </div>
+        )}
+
         {d && (!d.profileComplete || !d.mt5Connected) && (
           <StartupPill profileComplete={d.profileComplete} mt5Connected={d.mt5Connected} />
         )}
@@ -152,7 +170,7 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center flex-none ${
-                status === "safety_stop" ? "bg-redbg text-red" : "bg-greenbg text-green"
+                status === "safety_stop" || status === "admin_disabled" ? "bg-redbg text-red" : "bg-greenbg text-green"
               }`}
             >
               {icon}
@@ -164,7 +182,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          {status !== "safety_stop" && (
+          {status !== "safety_stop" && status !== "admin_disabled" && (
             <div
               className={`w-[46px] h-[27px] rounded-full relative flex-none transition-colors ${
                 d?.robotActive ? "bg-green" : "bg-surface3"

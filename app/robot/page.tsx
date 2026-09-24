@@ -6,7 +6,16 @@ import AppShell from "@/components/AppShell";
 import { useToast } from "@/components/Toast";
 import { Button, FieldLabel, Switch } from "@/components/ui";
 
-type Robot = { active: boolean; riskLevel: number; lot: number; maxPositions: number; plan: string; pair: string };
+type Robot = {
+  active: boolean;
+  riskLevel: number;
+  lot: number;
+  maxPositions: number;
+  plan: string;
+  pair: string;
+  adminDisabled: boolean;
+  adminDisabledReason?: string | null;
+};
 const RISK_LABELS = ["Prudent", "Modéré", "Agressif"];
 const SUGGESTED_LOT = [0.01, 0.02, 0.05];
 const PAIR_LABELS: Record<string, string> = {
@@ -94,6 +103,19 @@ export default function RobotPage() {
       </p>
       {robot && (
         <div className="flex flex-col gap-3.5">
+          {robot.adminDisabled && (
+            <div className="flex items-start gap-2.5 bg-redbg border border-[rgba(192,86,59,0.35)] rounded-md2 px-4 py-3">
+              <span className="text-lg flex-none">⛔</span>
+              <div>
+                <div className="text-[13.5px] font-semibold text-red">
+                  L'équipe Lotabot a désactivé le robot sur ton compte
+                </div>
+                <div className="text-[12px] text-dim leading-relaxed mt-0.5">
+                  {robot.adminDisabledReason || "Contacte le support pour en savoir plus."}
+                </div>
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-between bg-surface border border-border rounded-md2 px-4 py-[15px]">
             <span className="font-semibold">Robot actif</span>
             <Switch on={robot.active} onClick={toggleActive} />
