@@ -6,9 +6,14 @@ import AppShell from "@/components/AppShell";
 import { useToast } from "@/components/Toast";
 import { Button, FieldLabel, Switch } from "@/components/ui";
 
-type Robot = { active: boolean; riskLevel: number; lot: number; maxPositions: number; plan: string };
+type Robot = { active: boolean; riskLevel: number; lot: number; maxPositions: number; plan: string; pair: string };
 const RISK_LABELS = ["Prudent", "Modéré", "Agressif"];
 const SUGGESTED_LOT = [0.01, 0.02, 0.05];
+const PAIR_LABELS: Record<string, string> = {
+  XAUUSD: "XAUUSD (Or)",
+  EURUSD: "EURUSD (Euro / Dollar)",
+  BTCUSD: "BTCUSD (Bitcoin)",
+};
 
 export default function RobotPage() {
   const toast = useToast();
@@ -81,7 +86,12 @@ export default function RobotPage() {
 
   return (
     <AppShell>
-      <h1 className="heading-font text-lg font-bold pt-4 pb-4">Mon robot - XAUUSD</h1>
+      <h1 className="heading-font text-lg font-bold pt-4 pb-1">
+        Mon robot{robot ? ` - ${PAIR_LABELS[robot.pair] ?? robot.pair}` : ""}
+      </h1>
+      <p className="text-dim text-[12.5px] -mt-0.5 pb-3">
+        La paire est choisie une fois, à la connexion de ton compte MT5.
+      </p>
       {robot && (
         <div className="flex flex-col gap-3.5">
           <div className="flex items-center justify-between bg-surface border border-border rounded-md2 px-4 py-[15px]">

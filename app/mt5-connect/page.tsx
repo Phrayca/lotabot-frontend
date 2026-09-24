@@ -8,12 +8,19 @@ import { useToast } from "@/components/Toast";
 // Serveurs connus, proposés pendant la saisie (le client peut aussi taper le sien).
 const KNOWN_SERVERS = ["JustMarkets-Demo"];
 
+const PAIRS: { code: "XAUUSD" | "EURUSD" | "BTCUSD"; label: string; hint: string }[] = [
+  { code: "XAUUSD", label: "Or (XAUUSD)", hint: "Le plus tradé chez nous, notre stratégie la plus éprouvée." },
+  { code: "EURUSD", label: "Euro / Dollar (EURUSD)", hint: "Moins volatil que l'or, mouvements plus mesurés." },
+  { code: "BTCUSD", label: "Bitcoin (BTCUSD)", hint: "Marché ouvert 24h/24, week-end compris — variations plus fortes." },
+];
+
 type LegalStatus = { allAccepted: boolean };
 
 export default function MT5ConnectPage() {
   const router = useRouter();
   const toast = useToast();
   const [checkingLegal, setCheckingLegal] = useState(true);
+  const [pair, setPair] = useState<(typeof PAIRS)[number]["code"]>("XAUUSD");
   const [brokerServer, setBrokerServer] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [password, setPassword] = useState("");
@@ -63,7 +70,7 @@ export default function MT5ConnectPage() {
     try {
       const data = await api<{ demoMode: boolean }>("/mt5/connect", {
         method: "POST",
-        body: { brokerServer: server, accountNumber: account, password },
+        body: { brokerServer: server, accountNumber: account, password, pair },
       });
       toast(data.demoMode ? "Compte connecté, mise en route en cours" : "Compte MT5 connecté");
       // On affiche l'état du compte : il passe de « Mise en route » à « Robot actif »
@@ -103,10 +110,19 @@ export default function MT5ConnectPage() {
       <div className="bg-surface border border-border rounded-md2 px-4 py-3.5 mb-5 flex items-start gap-2.5">
         <span className="text-[15px] flex-none">💵</span>
         <p className="text-[12.5px] text-dim leading-relaxed m-0">
-          Capital minimum accepté : <strong className="text-ink">100 $</strong>. En dessous d'environ{" "}
-          <strong className="text-ink">600 $</strong>, le lot minimum imposé par les courtiers pèse plus
-          lourd dans le risque par trade — c'est expliqué dans l'avertissement sur les risques que tu as
-          accepté.
+          Capital minimum accepté : <strong className="text-ink">100 $</strong>.{" "}
+          {pair === "XAUUSD" ? (
+            <>
+              En dessous d'environ <strong className="text-ink">600 $</strong>, le lot minimum imposé par les
+              courtiers pèse plus lourd dans le risque par trade — c'est expliqué dans l'avertissement sur les
+              risques que tu as accepté.
+            </>
+          ) : (
+            <>
+              Le seuil de capital recommandé pour cette paire peut différer de celui de l'or ; le support peut te
+              conseiller un montant précis si besoin.
+            </>
+          )}
         </p>
       </div>
 
@@ -155,6 +171,33 @@ export default function MT5ConnectPage() {
       )}
 
       <div className="flex flex-col gap-3.5">
+        <div>
+          <FieldLabel>Paire tradée par le robot</FieldLabel>
+          <div className="flex flex-col gap-2">
+            {PAIRS.map((p) => (
+              <button
+                key={p.code}
+                type="button"
+                onClick={() => setPair(p.code)}
+                className={`text-left rounded-md2 border px-3.5 py-3 ${
+                  pair === p.code ? "border-goldbright bg-[rgba(201,154,75,0.1)]" : "border-border bg-surface"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`font-semibold text-[14px] ${pair === p.code ? "text-goldbright" : "text-ink"}`}>
+                    {p.label}
+                  </span>
+                  {pair === p.code && <span className="text-goldbright text-[13px]">✓</span>}
+                </div>
+                <p className="text-dimmer text-[12px] mt-0.5 m-0">{p.hint}</p>
+              </button>
+            ))}
+          </div>
+          <p className="text-dimmer text-[12px] mt-1.5 leading-relaxed">
+            Ce choix détermine la stratégie appliquée par le robot. Tu pourras en discuter avec le support si tu
+            veux changer de paire plus tard.
+          </p>
+        </div>
         <div>
           <FieldLabel>Serveur du courtier</FieldLabel>
           <input
