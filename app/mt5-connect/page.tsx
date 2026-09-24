@@ -62,8 +62,8 @@ export default function MT5ConnectPage() {
       setError("Tous les champs sont requis.");
       return;
     }
-    if (!/^\d+$/.test(account)) {
-      setError("Le numéro de compte ne contient que des chiffres.");
+    if (!/^\d{4,}$/.test(account) || /^0+$/.test(account)) {
+      setError("Le numéro de compte doit contenir au moins 4 chiffres, et ne peut pas être 0.");
       return;
     }
     setLoading(true);
