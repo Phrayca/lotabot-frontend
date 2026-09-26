@@ -11,7 +11,7 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (isAdminLoggedIn()) router.replace("/admin/clients");
+    if (isAdminLoggedIn()) router.replace("/admin");
   }, [router]);
 
   async function login() {
@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
         body: { email: email.trim(), password },
       });
       setAdminToken(data.token);
-      router.push("/admin/clients");
+      router.push("/admin");
     } catch (err: any) {
       setError(err.message);
     } finally {

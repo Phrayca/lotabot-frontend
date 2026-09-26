@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { adminApi, clearAdminToken, isAdminLoggedIn } from "@/lib/adminApi";
 
 const NAV = [
+  { href: "/admin", label: "Tableau de bord" },
   { href: "/admin/clients", label: "Clients" },
   { href: "/admin/support", label: "Support" },
 ];
@@ -44,7 +45,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           </div>
         </div>
         {NAV.map((item) => {
-          const active = pathname?.startsWith(item.href);
+          const active = item.href === "/admin" ? pathname === "/admin" : pathname?.startsWith(item.href);
           return (
             <Link
               key={item.href}

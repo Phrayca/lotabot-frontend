@@ -223,7 +223,7 @@ export default function HomePage() {
           href="/parrainage"
           className="block bg-gradient-to-br from-[rgba(201,154,75,0.16)] to-[rgba(201,154,75,0.06)] border border-[rgba(201,154,75,0.25)] rounded-md2 px-4 py-[15px] font-semibold text-[14.5px] text-goldbright mt-3.5"
         >
-          Parraine un ami, gagne un mois offert ↗
+          Parraine un ami, gagne 1 000 F par filleul ↗
         </Link>
 
         <Link
