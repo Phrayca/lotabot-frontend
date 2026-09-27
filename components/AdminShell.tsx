@@ -23,7 +23,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         .catch(() => {});
     }
     load();
-    const timer = setInterval(load, 20000);
+    const timer = setInterval(load, 45000);
     return () => clearInterval(timer);
   }, []);
 

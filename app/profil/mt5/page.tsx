@@ -41,7 +41,7 @@ export default function MT5StatusPage() {
     load();
     // L'état change tout seul (mise en route, erreur corrigée, arrêt de sécurité) : on le
     // rafraîchit toutes les 10 s
-    const timer = setInterval(() => load(true), 10000);
+    const timer = setInterval(() => load(true), 25000);
     return () => clearInterval(timer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
