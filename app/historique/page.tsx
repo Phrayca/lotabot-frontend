@@ -127,7 +127,7 @@ export default function HistoriquePage() {
                     <div className="font-semibold text-[14.5px] flex items-center gap-1.5">
                       {t.pair}
                       {t.status === "open" && (
-                        <span className="text-[10.5px] font-semibold text-goldbright bg-[rgba(201,154,75,0.15)] px-1.5 py-[1px] rounded-full">
+                        <span className="text-[10.5px] font-semibold text-goldbright bg-[rgba(0,179,164,0.15)] px-1.5 py-[1px] rounded-full">
                           en cours
                         </span>
                       )}

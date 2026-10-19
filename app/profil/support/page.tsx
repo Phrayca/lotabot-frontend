@@ -120,7 +120,7 @@ export default function SupportListPage() {
                 t.status === "resolved"
                   ? "bg-greenbg text-green"
                   : t.status === "in_progress"
-                  ? "bg-[rgba(201,154,75,0.15)] text-goldbright"
+                  ? "bg-[rgba(0,179,164,0.15)] text-goldbright"
                   : "bg-surface2 text-dim"
               }`}
             >

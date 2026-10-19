@@ -122,7 +122,7 @@ export default function SupportThreadPage() {
             t.status === "resolved"
               ? "bg-greenbg text-green"
               : t.status === "in_progress"
-              ? "bg-[rgba(201,154,75,0.15)] text-goldbright"
+              ? "bg-[rgba(0,179,164,0.15)] text-goldbright"
               : "bg-surface2 text-dim"
           }`}
         >
@@ -135,7 +135,7 @@ export default function SupportThreadPage() {
           <div key={m.id} className={`flex ${m.senderType === "client" ? "justify-end" : "justify-start"}`}>
             <div
               className={`max-w-[80%] rounded-md2 px-3.5 py-2.5 text-[13.5px] leading-relaxed ${
-                m.senderType === "client" ? "bg-[rgba(201,154,75,0.15)] text-ink" : "bg-surface border border-border"
+                m.senderType === "client" ? "bg-[rgba(0,179,164,0.15)] text-ink" : "bg-surface border border-border"
               }`}
             >
               {m.attachmentData && m.attachmentIsImage && (

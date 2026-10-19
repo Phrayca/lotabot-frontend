@@ -4,47 +4,72 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-/* Palette sombre (valeurs d'origine de l'app, inchangees) */
+/* Nouvelle identite : turquoise, clair par defaut (suit aussi la preference systeme quand
+   le choix est "auto"). Les NOMS de variables restent inchanges (--color-gold,
+   --color-goldbright, etc.) expres : toutes les pages existantes utilisent deja ces
+   classes Tailwind (text-goldbright, bg-surface...) - changer les VALEURS suffit a
+   retheme toute l'app sans toucher a chaque ecran un par un. */
 :root {
-  --color-bg: #10151c;
-  --color-frame: #0b0f14;
-  --color-surface: #1a212b;
-  --color-surface2: #212a35;
-  --color-surface3: #28323e;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-ink: #eef1f4;
-  --color-dim: #8e99a8;
-  --color-dimmer: #66707d;
-  --color-gold: #c99a4b;
-  --color-goldbright: #e4b565;
-  --color-green: #3fa873;
-  --color-greenbg: rgba(63, 168, 115, 0.12);
-  --color-red: #c0563b;
-  --color-redbg: rgba(192, 86, 59, 0.12);
-  /* Fond de la page derriere le cadre mobile (max-w-md) : plus sombre que --color-bg,
-     c'etait deja le cas avant, garde ici sous son propre nom plutot que confondu avec "bg". */
-  --html-bg: #080a0d;
-}
-
-/* Palette claire, meme structure, tons chauds assortis a l'accent dore existant plutot
-   qu'un blanc/gris neutre generique. */
-[data-theme="light"] {
-  --color-bg: #f7f4ee;
+  --color-bg: #f4f6f8;
   --color-frame: #ffffff;
   --color-surface: #ffffff;
-  --color-surface2: #f1ede4;
-  --color-surface3: #e7e0d2;
-  --color-border: rgba(20, 16, 8, 0.1);
-  --color-ink: #211c14;
-  --color-dim: #6b6152;
-  --color-dimmer: #948a7a;
-  --color-gold: #a9793a;
-  --color-goldbright: #92652f;
-  --color-green: #227351;
-  --color-greenbg: rgba(34, 115, 81, 0.12);
-  --color-red: #9c3f28;
-  --color-redbg: rgba(156, 63, 40, 0.1);
-  --html-bg: #efe9db;
+  --color-surface2: #eef1f4;
+  --color-surface3: #e3e8ee;
+  --color-border: #e3e8ee;
+  --color-ink: #0e1620;
+  --color-dim: #6b7785;
+  --color-dimmer: #96a0ac;
+  --color-gold: #00b3a4;
+  --color-goldbright: #00b3a4;
+  --color-green: #0aa86b;
+  --color-greenbg: rgba(10, 168, 107, 0.12);
+  --color-red: #e5484d;
+  --color-redbg: rgba(229, 72, 77, 0.1);
+  --html-bg: #f4f6f8;
+}
+
+/* Sombre : declenche automatiquement si le systeme est en mode sombre ET qu'aucun choix
+   explicite n'a ete fait ("auto", le reglage par defaut), ou si l'utilisateur choisit
+   "Sombre" dans Parametres, quel que soit le reglage systeme. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #0b0f14;
+    --color-frame: #151b23;
+    --color-surface: #151b23;
+    --color-surface2: #1b222b;
+    --color-surface3: #232c37;
+    --color-border: #232c37;
+    --color-ink: #eef2f6;
+    --color-dim: #8693a1;
+    --color-dimmer: #5c6774;
+    --color-gold: #00b3a4;
+    --color-goldbright: #00b3a4;
+    --color-green: #0aa86b;
+    --color-greenbg: rgba(10, 168, 107, 0.16);
+    --color-red: #e5484d;
+    --color-redbg: rgba(229, 72, 77, 0.14);
+    --html-bg: #0b0f14;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --color-bg: #0b0f14;
+  --color-frame: #151b23;
+  --color-surface: #151b23;
+  --color-surface2: #1b222b;
+  --color-surface3: #232c37;
+  --color-border: #232c37;
+  --color-ink: #eef2f6;
+  --color-dim: #8693a1;
+  --color-dimmer: #5c6774;
+  --color-gold: #00b3a4;
+  --color-goldbright: #00b3a4;
+  --color-green: #0aa86b;
+  --color-greenbg: rgba(10, 168, 107, 0.16);
+  --color-red: #e5484d;
+  --color-redbg: rgba(229, 72, 77, 0.14);
+  --html-bg: #0b0f14;
+  color-scheme: dark;
 }
 
 html,

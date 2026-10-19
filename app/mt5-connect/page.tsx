@@ -94,7 +94,7 @@ export default function MT5ConnectPage() {
   return (
     <div className="min-h-screen max-w-md mx-auto px-6 pt-14 pb-10">
       <h1 className="heading-font text-xl font-bold mb-1">Connecte ton compte MT5</h1>
-      <div className="flex items-start gap-2.5 bg-[rgba(201,154,75,0.1)] border border-[rgba(201,154,75,0.25)] rounded-md2 px-4 py-3 mb-4 text-[12.5px] text-goldbright leading-relaxed">
+      <div className="flex items-start gap-2.5 bg-[rgba(0,179,164,0.1)] border border-[rgba(0,179,164,0.25)] rounded-md2 px-4 py-3 mb-4 text-[12.5px] text-goldbright leading-relaxed">
         <span>💡</span>
         <span>
           N'oublie pas non plus de compléter ton profil (Profil → Informations personnelles) : c'est
@@ -180,7 +180,7 @@ export default function MT5ConnectPage() {
                 type="button"
                 onClick={() => setPair(p.code)}
                 className={`text-left rounded-md2 border px-3.5 py-3 ${
-                  pair === p.code ? "border-goldbright bg-[rgba(201,154,75,0.1)]" : "border-border bg-surface"
+                  pair === p.code ? "border-goldbright bg-[rgba(0,179,164,0.1)]" : "border-border bg-surface"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -257,7 +257,7 @@ export default function MT5ConnectPage() {
 function GuideStep({ n, text }: { n: number; text: string }) {
   return (
     <div className="flex items-start gap-2.5">
-      <span className="w-5 h-5 rounded-full bg-[rgba(201,154,75,0.18)] text-goldbright text-[11px] font-bold flex items-center justify-center flex-none mt-0.5">
+      <span className="w-5 h-5 rounded-full bg-[rgba(0,179,164,0.18)] text-goldbright text-[11px] font-bold flex items-center justify-center flex-none mt-0.5">
         {n}
       </span>
       <p className="text-[12.5px] text-dim leading-relaxed">{text}</p>

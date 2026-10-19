@@ -157,7 +157,7 @@ export default function RobotPage() {
             )}
           </div>
 
-          <div className="bg-[rgba(201,154,75,0.1)] border border-[rgba(201,154,75,0.25)] rounded-md2 px-4 py-3 text-[12.5px] text-goldbright leading-relaxed">
+          <div className="bg-[rgba(0,179,164,0.1)] border border-[rgba(0,179,164,0.25)] rounded-md2 px-4 py-3 text-[12.5px] text-goldbright leading-relaxed">
             ⚠️ Le lot est déjà réglé automatiquement selon ton niveau de risque. Nous te recommandons de le
             laisser tel quel — ne le modifie que si tu veux prendre le risque toi-même, en connaissance de
             cause.

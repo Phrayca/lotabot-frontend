@@ -9,13 +9,14 @@ export const metadata: Metadata = {
 };
 
 // Applique la preference de theme enregistree AVANT le premier rendu, pour eviter un
-// flash de mauvais theme au chargement de la page (le mode sombre reste la valeur par
-// defaut tant que rien n'est enregistre : on ne touche a rien dans ce cas).
+// flash de mauvais theme au chargement de la page. "auto" (ou rien d'enregistre) ne
+// touche a rien : la regle @media (prefers-color-scheme) dans globals.css suffit alors.
 const THEME_INIT_SCRIPT = `
 (function () {
   try {
-    if (window.localStorage.getItem("lotabot_theme") === "light") {
-      document.documentElement.setAttribute("data-theme", "light");
+    var t = window.localStorage.getItem("lotabot_theme");
+    if (t === "light" || t === "dark") {
+      document.documentElement.setAttribute("data-theme", t);
     }
   } catch (e) {}
 })();

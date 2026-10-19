@@ -80,7 +80,7 @@ export default function HomePage() {
             <div className="heading-font text-lg font-bold">{d?.fullName ?? "…"}</div>
           </div>
           <div className="flex items-center gap-2.5">
-            <span className="text-xs font-bold px-[10px] py-1 rounded-full bg-[rgba(201,154,75,0.15)] text-goldbright">
+            <span className="text-xs font-bold px-[10px] py-1 rounded-full bg-[rgba(0,179,164,0.15)] text-goldbright">
               {d?.plan === "premium" ? "Premium" : "Classique"}
             </span>
             <Link
@@ -221,7 +221,7 @@ export default function HomePage() {
 
         <Link
           href="/parrainage"
-          className="block bg-gradient-to-br from-[rgba(201,154,75,0.16)] to-[rgba(201,154,75,0.06)] border border-[rgba(201,154,75,0.25)] rounded-md2 px-4 py-[15px] font-semibold text-[14.5px] text-goldbright mt-3.5"
+          className="block bg-gradient-to-br from-[rgba(0,179,164,0.16)] to-[rgba(0,179,164,0.06)] border border-[rgba(0,179,164,0.25)] rounded-md2 px-4 py-[15px] font-semibold text-[14.5px] text-goldbright mt-3.5"
         >
           Parraine un ami, gagne 1 000 F par filleul ↗
         </Link>
@@ -249,7 +249,7 @@ function StartupPill({ profileComplete, mt5Connected }: { profileComplete: boole
   return (
     <Link
       href={nextHref}
-      className="flex items-center gap-2.5 bg-[rgba(201,154,75,0.1)] border border-[rgba(201,154,75,0.25)] rounded-full pl-3.5 pr-2.5 py-2 mb-3.5"
+      className="flex items-center gap-2.5 bg-[rgba(0,179,164,0.1)] border border-[rgba(0,179,164,0.25)] rounded-full pl-3.5 pr-2.5 py-2 mb-3.5"
     >
       <span className="text-goldbright text-[13px] flex-none">🚀</span>
       <span className="text-[12.5px] text-goldbright font-medium flex-1 truncate">{nextLabel}</span>

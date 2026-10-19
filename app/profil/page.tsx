@@ -3,9 +3,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, setToken } from "@/lib/api";
 import AppShell from "@/components/AppShell";
-import { RowItem, Button, Switch } from "@/components/ui";
+import { RowItem, Button } from "@/components/ui";
 import { useToast } from "@/components/Toast";
-import { useTheme } from "@/components/ThemeProvider";
 
 type Profile = {
   fullName: string;
@@ -33,7 +32,6 @@ const STATUS_LABEL: Record<string, string> = {
 export default function ProfilPage() {
   const router = useRouter();
   const toast = useToast();
-  const { theme, toggleTheme } = useTheme();
   const [p, setP] = useState<Profile | null>(null);
   const [supportUnread, setSupportUnread] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -70,7 +68,7 @@ export default function ProfilPage() {
     <AppShell>
       <div className="pt-5">
         <div className="flex items-center gap-3.5 mb-5.5">
-          <div className="w-16 h-16 rounded-full bg-[rgba(201,154,75,0.2)] text-goldbright flex items-center justify-center font-bold text-xl">
+          <div className="w-16 h-16 rounded-full bg-[rgba(0,179,164,0.2)] text-goldbright flex items-center justify-center font-bold text-xl">
             {p ? initials(p.fullName) : "…"}
           </div>
           <div>
@@ -123,13 +121,13 @@ export default function ProfilPage() {
             </div>
             <span className="text-dim">›</span>
           </RowItem>
-          <div className="flex items-center justify-between bg-surface border border-border rounded-md2 px-4 py-[15px]">
+          <RowItem href="/parametres">
             <div className="flex items-center gap-3">
-              <span>{theme === "dark" ? "🌙" : "☀️"}</span>
-              <span>Mode {theme === "dark" ? "sombre" : "clair"}</span>
+              <span>⚙️</span>
+              <span>Paramètres</span>
             </div>
-            <Switch on={theme === "light"} onClick={toggleTheme} />
-          </div>
+            <span className="text-dim">›</span>
+          </RowItem>
         </div>
         <Button variant="dangerText" onClick={logout} className="mt-6 text-left justify-start">
           ↩ Se déconnecter
