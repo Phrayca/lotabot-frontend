@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, History, Bot, GraduationCap, User } from "lucide-react";
+import { Home, ListChecks, ShieldCheck, GraduationCap, User } from "lucide-react";
 
 const TABS = [
   { key: "home", label: "Accueil", href: "/home", Icon: Home },
-  { key: "historique", label: "Historique", href: "/historique", Icon: History },
-  { key: "robot", label: "Robot", href: "/robot", Icon: Bot },
+  { key: "positions", label: "Positions", href: "/historique", Icon: ListChecks },
   { key: "formation", label: "Formation", href: "/formation", Icon: GraduationCap },
+  { key: "protections", label: "Protections", href: "/robot", Icon: ShieldCheck },
   { key: "profil", label: "Profil", href: "/profil", Icon: User },
 ];
 

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import AppShell from "@/components/AppShell";
 import { useToast } from "@/components/Toast";
-import { Button, FieldLabel, Switch } from "@/components/ui";
+import { Button, FieldLabel } from "@/components/ui";
 
 type Robot = {
   active: boolean;
@@ -23,8 +23,15 @@ const PAIR_LABELS: Record<string, string> = {
   EURUSD: "EURUSD (Euro / Dollar)",
   BTCUSD: "BTCUSD (Bitcoin)",
 };
+// Doit rester identique aux RISK_PROFILES definis cote bridge (config.py) : affichage
+// informatif uniquement, les vraies limites sont appliquees par le bridge lui-meme.
+const PROTECTION_FACTS = [
+  { riskPerTrade: "0,5 %", dailyLoss: "2 %", circuitBreaker: "10 %" },
+  { riskPerTrade: "1 %", dailyLoss: "3 %", circuitBreaker: "15 %" },
+  { riskPerTrade: "2 %", dailyLoss: "5 %", circuitBreaker: "25 %" },
+];
 
-export default function RobotPage() {
+export default function ProtectionsPage() {
   const toast = useToast();
   const router = useRouter();
   const [robot, setRobot] = useState<Robot | null>(null);
@@ -45,16 +52,6 @@ export default function RobotPage() {
       .catch((err) => toast(err.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function toggleActive() {
-    if (!robot) return;
-    try {
-      const r = await api<Robot>("/robot/toggle", { method: "PUT" });
-      setRobot(r);
-    } catch (err: any) {
-      toast(err.message);
-    }
-  }
 
   function setRisk(level: number) {
     if (!isPremium) {
@@ -93,13 +90,13 @@ export default function RobotPage() {
     }
   }
 
+  const facts = robot ? PROTECTION_FACTS[robot.riskLevel] : null;
+
   return (
     <AppShell>
-      <h1 className="heading-font text-lg font-bold pt-4 pb-1">
-        Mon robot{robot ? ` - ${PAIR_LABELS[robot.pair] ?? robot.pair}` : ""}
-      </h1>
+      <h1 className="heading-font text-lg font-bold pt-4 pb-1">Protections</h1>
       <p className="text-dim text-[12.5px] -mt-0.5 pb-3">
-        La paire est choisie une fois, à la connexion de ton compte MT5.
+        {robot ? PAIR_LABELS[robot.pair] ?? robot.pair : "…"} — le robot s'active/se met en pause depuis l'Accueil.
       </p>
       {robot && (
         <div className="flex flex-col gap-3.5">
@@ -116,10 +113,6 @@ export default function RobotPage() {
               </div>
             </div>
           )}
-          <div className="flex items-center justify-between bg-surface border border-border rounded-md2 px-4 py-[15px]">
-            <span className="font-semibold">Robot actif</span>
-            <Switch on={robot.active} onClick={toggleActive} />
-          </div>
 
           <div>
             <div className="flex items-center justify-between mb-[7px]">
@@ -156,6 +149,38 @@ export default function RobotPage() {
               </p>
             )}
           </div>
+
+          {facts && (
+            <div className="bg-surface border border-border rounded-md2 px-4 py-3.5">
+              <div className="text-[12.5px] font-semibold text-dim mb-2.5">
+                Ce que protège le niveau « {RISK_LABELS[robot.riskLevel]} »
+              </div>
+              <div className="flex items-start gap-2.5 mb-2">
+                <span className="text-[15px] flex-none">🛡️</span>
+                <span className="text-[13px] leading-relaxed">
+                  Stop loss toujours actif, sur chaque position — jamais de trade sans filet.
+                </span>
+              </div>
+              <div className="flex items-start gap-2.5 mb-2">
+                <span className="text-[15px] flex-none">📉</span>
+                <span className="text-[13px] leading-relaxed">
+                  Risque par trade : <strong>{facts.riskPerTrade}</strong> du capital.
+                </span>
+              </div>
+              <div className="flex items-start gap-2.5 mb-2">
+                <span className="text-[15px] flex-none">⏸️</span>
+                <span className="text-[13px] leading-relaxed">
+                  Perte quotidienne max : <strong>{facts.dailyLoss}</strong> — le robot s'arrête pour la journée au-delà.
+                </span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="text-[15px] flex-none">⛔</span>
+                <span className="text-[13px] leading-relaxed">
+                  Coupe-circuit : arrêt complet si le solde chute de <strong>{facts.circuitBreaker}</strong> depuis son plus haut.
+                </span>
+              </div>
+            </div>
+          )}
 
           <div className="bg-[rgba(0,179,164,0.1)] border border-[rgba(0,179,164,0.25)] rounded-md2 px-4 py-3 text-[12.5px] text-goldbright leading-relaxed">
             ⚠️ Le lot est déjà réglé automatiquement selon ton niveau de risque. Nous te recommandons de le
